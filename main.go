@@ -4,29 +4,33 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
-	"github.com/joho/godotenv"
+	"github.com/Quak1/gokei/internal/config"
+	"github.com/Quak1/gokei/internal/database"
+	"github.com/Quak1/gokei/internal/handlers"
+	"github.com/Quak1/gokei/internal/services"
 )
 
 func main() {
-	godotenv.Load()
+	cfg := config.Load()
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	db := database.NewDBConnection(cfg.Database.Url)
+	defer db.Close()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/hello", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "Welcome to the home page!")
 	})
 
-	server := &http.Server{
-		Addr:    ":" + port,
+	userService := services.NewUserService(db.Queries)
+	userHandler := handlers.NewUserHandler(*userService)
+
+	mux.HandleFunc("POST /api/register", userHandler.Register)
+
+	server := http.Server{
+		Addr:    ":" + cfg.Server.Port,
 		Handler: mux,
 	}
-
-	log.Printf("Serving on port: %s\n", port)
+	log.Printf("Serving on port: %s\n", cfg.Server.Port)
 	log.Fatal(server.ListenAndServe())
 }
