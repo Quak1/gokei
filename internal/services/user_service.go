@@ -2,10 +2,11 @@ package services
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Quak1/gokei/internal/auth"
 	"github.com/Quak1/gokei/internal/database/queries"
+	"github.com/Quak1/gokei/internal/errors"
+	"github.com/lib/pq"
 )
 
 type UserService struct {
@@ -26,16 +27,16 @@ type RegisterUserRequest struct {
 
 func (s *UserService) Register(ctx context.Context, req *RegisterUserRequest) (*queries.User, error) {
 	if req.Username == "" {
-		return nil, fmt.Errorf("username is required")
+		return nil, errors.NewAppError(errors.ErrValidation, "Username is required", nil)
 	}
 
 	if req.Password == "" {
-		return nil, fmt.Errorf("password is required")
+		return nil, errors.NewAppError(errors.ErrValidation, "Password is required", nil)
 	}
 
 	hashedPassword, err := auth.HashPassword(req.Password)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewAppError(errors.ErrInternal, "Failed to create user", err)
 	}
 
 	if req.Name == "" {
@@ -48,7 +49,10 @@ func (s *UserService) Register(ctx context.Context, req *RegisterUserRequest) (*
 		Name:           req.Name,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
+		if pqErr, _ := err.(*pq.Error); pqErr.Code == errors.PGErrorCodeUniqueViolation {
+			return nil, errors.NewAppError(errors.ErrConflict, "Username is already in use", err)
+		}
+		return nil, errors.NewAppError(errors.ErrInternal, "Failed to create user", err)
 	}
 
 	return &user, nil

@@ -21,13 +21,13 @@ func NewUserHandler(userService services.UserService) *UserHandler {
 func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	params := services.RegisterUserRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		utils.ResError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
+		utils.ResError(w, err)
 		return
 	}
 
 	user, err := h.userService.Register(r.Context(), &params)
 	if err != nil {
-		utils.ResError(w, http.StatusInternalServerError, "Couldn't create user", err)
+		utils.ResError(w, err)
 		return
 	}
 
