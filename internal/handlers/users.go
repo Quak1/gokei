@@ -33,3 +33,19 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	utils.ResJSON(w, http.StatusCreated, user)
 }
+
+func (h *UserHandler) TokenLogin(w http.ResponseWriter, r *http.Request) {
+	params := services.LoginRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		utils.ResError(w, err)
+		return
+	}
+
+	token, err := h.userService.TokenLogin(r.Context(), &params)
+	if err != nil {
+		utils.ResError(w, err)
+		return
+	}
+
+	utils.ResJSON(w, http.StatusOK, token)
+}

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/Quak1/gokei/internal/auth"
 	"github.com/Quak1/gokei/internal/database/queries"
@@ -10,12 +11,14 @@ import (
 )
 
 type UserService struct {
-	queries *queries.Queries
+	queries     *queries.Queries
+	tokenSecret string
 }
 
-func NewUserService(queries *queries.Queries) *UserService {
+func NewUserService(queries *queries.Queries, tokenSecret string) *UserService {
 	return &UserService{
-		queries: queries,
+		queries:     queries,
+		tokenSecret: tokenSecret,
 	}
 }
 
@@ -56,4 +59,37 @@ func (s *UserService) Register(ctx context.Context, req *RegisterUserRequest) (*
 	}
 
 	return &user, nil
+}
+
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func (s *UserService) TokenLogin(ctx context.Context, req *LoginRequest) (string, error) {
+	if req.Username == "" {
+		return "", errors.NewAppError(errors.ErrValidation, "Username is required", nil)
+	}
+	if req.Password == "" {
+		return "", errors.NewAppError(errors.ErrValidation, "Password is required", nil)
+	}
+
+	loginFailedMessage := "Login failed. Please check your credentials."
+
+	user, err := s.queries.GetUser(ctx, req.Username)
+	if err != nil {
+		return "", errors.NewAppError(errors.ErrInternal, loginFailedMessage, err)
+	}
+
+	err = auth.CheckHashedPassword(req.Password, user.HashedPassword)
+	if err != nil {
+		return "", errors.NewAppError(errors.ErrInternal, loginFailedMessage, err)
+	}
+
+	token, err := auth.MakeJWT(int(user.ID), s.tokenSecret, time.Hour*24)
+	if err != nil {
+		return "", errors.NewAppError(errors.ErrInternal, loginFailedMessage, err)
+	}
+
+	return token, nil
 }

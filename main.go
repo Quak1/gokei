@@ -22,10 +22,11 @@ func main() {
 		fmt.Fprintf(w, "Welcome to the home page!")
 	})
 
-	userService := services.NewUserService(db.Queries)
+	userService := services.NewUserService(db.Queries, cfg.Server.TokenSecret)
 	userHandler := handlers.NewUserHandler(*userService)
 
 	mux.HandleFunc("POST /api/register", userHandler.Register)
+	mux.HandleFunc("POST /api/login", userHandler.TokenLogin)
 
 	server := http.Server{
 		Addr:    ":" + cfg.Server.Port,

@@ -13,7 +13,8 @@ type config struct {
 }
 
 type serverConfig struct {
-	Port string
+	Port        string
+	TokenSecret string
 }
 
 type databaseConfig struct {
@@ -25,7 +26,8 @@ func Load() *config {
 
 	return &config{
 		Server: serverConfig{
-			Port: getEnvOptional("PORT", "8080"),
+			Port:        getEnvOptional("PORT", "8080"),
+			TokenSecret: getEnv("TOKEN_SECRET"),
 		},
 		Database: databaseConfig{
 			Url: getEnv("DB_URL"),
