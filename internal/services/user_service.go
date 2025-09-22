@@ -11,14 +11,14 @@ import (
 )
 
 type UserService struct {
-	queries     *queries.Queries
-	tokenSecret string
+	queries *queries.Queries
+	jwt     *auth.JWTService
 }
 
-func NewUserService(queries *queries.Queries, tokenSecret string) *UserService {
+func NewUserService(queries *queries.Queries, jwtService *auth.JWTService) *UserService {
 	return &UserService{
-		queries:     queries,
-		tokenSecret: tokenSecret,
+		queries: queries,
+		jwt:     jwtService,
 	}
 }
 
@@ -86,7 +86,7 @@ func (s *UserService) TokenLogin(ctx context.Context, req *LoginRequest) (string
 		return "", errors.NewAppError(errors.ErrInternal, loginFailedMessage, err)
 	}
 
-	token, err := auth.MakeJWT(int(user.ID), s.tokenSecret, time.Hour*24)
+	token, err := s.jwt.MakeJWT(user, time.Hour*24)
 	if err != nil {
 		return "", errors.NewAppError(errors.ErrInternal, loginFailedMessage, err)
 	}
