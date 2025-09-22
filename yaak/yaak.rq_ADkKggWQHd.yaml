@@ -1,0 +1,28 @@
+type: http_request
+model: http_request
+id: rq_ADkKggWQHd
+createdAt: 2025-09-22T23:28:07.261685893
+updatedAt: 2025-09-22T23:38:53.294740895
+workspaceId: wk_pq2KvoHKPm
+folderId: null
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "username": "test",
+      "password": "1234",
+      "name": "Test User"
+    }
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: Syuvx8MJyV
+method: POST
+name: BASE_URL/api/register
+sortPriority: -1758583687260.0
+url: ${[ BASE_URL ]}/api/register
+urlParameters: []

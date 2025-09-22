@@ -1,0 +1,19 @@
+type: http_request
+model: http_request
+id: rq_BKmjqeWPUL
+createdAt: 2025-09-22T23:34:17.052286457
+updatedAt: 2025-09-22T23:39:29.408305297
+workspaceId: wk_pq2KvoHKPm
+folderId: null
+authentication:
+  token: ${[ TOKEN ]}
+authenticationType: bearer
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: ''
+sortPriority: -1758583687260.0
+url: ${[ BASE_URL ]}/api/echo
+urlParameters: []

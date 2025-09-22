@@ -1,0 +1,14 @@
+type: workspace
+model: workspace
+id: wk_pq2KvoHKPm
+createdAt: 2025-09-22T23:26:06.175924569
+updatedAt: 2025-09-22T23:26:06.175927792
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
+name: Gokei
+encryptionKeyChallenge: null
+settingValidateCertificates: true
+settingFollowRedirects: true
+settingRequestTimeout: 0
