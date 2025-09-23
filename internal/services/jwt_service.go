@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Quak1/gokei/internal/apperrors"
 	"github.com/Quak1/gokei/internal/database/queries"
-	"github.com/Quak1/gokei/internal/errors"
 	"github.com/Quak1/gokei/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -53,12 +53,12 @@ func (s *JWTService) validateJWT(tokenString string) (*JWTCustomClaims, error) {
 		return s.tokenSecret, nil
 	}, jwt.WithIssuer(tokenIssuer))
 	if err != nil {
-		return nil, errors.NewAppError(errors.ErrUnauthorized, errorMessage, err)
+		return nil, apperrors.New(apperrors.CodeUnauthorized, errorMessage, err)
 	}
 
 	claims, ok := token.Claims.(*JWTCustomClaims)
 	if !ok {
-		return nil, errors.NewAppError(errors.ErrUnauthorized, errorMessage, err)
+		return nil, apperrors.New(apperrors.CodeUnauthorized, errorMessage, err)
 	}
 
 	return claims, nil
@@ -67,12 +67,12 @@ func (s *JWTService) validateJWT(tokenString string) (*JWTCustomClaims, error) {
 func (s *JWTService) getBearerToken(headers http.Header) (string, error) {
 	authHeader := headers.Get("Authorization")
 	if authHeader == "" {
-		return "", errors.NewAppError(errors.ErrUnauthorized, "Missing Authentication header", nil)
+		return "", apperrors.New(apperrors.CodeUnauthorized, "Missing Authentication header", nil)
 	}
 
 	split := strings.Split(authHeader, " ")
 	if len(split) != 2 || split[0] != "Bearer" {
-		return "", errors.NewAppError(errors.ErrUnauthorized, "Invalid Authorization header", nil)
+		return "", apperrors.New(apperrors.CodeUnauthorized, "Invalid Authorization header", nil)
 	}
 
 	return split[1], nil

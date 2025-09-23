@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/Quak1/gokei/internal/apperrors"
 	"github.com/Quak1/gokei/internal/database/queries"
-	"github.com/Quak1/gokei/internal/errors"
 	"github.com/Quak1/gokei/internal/utils"
 	"github.com/lib/pq"
 )
@@ -31,7 +31,7 @@ type RegisterUserRequest struct {
 func (s *UserService) Register(ctx context.Context, req *RegisterUserRequest) (*queries.User, error) {
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
-		return nil, errors.NewAppError(errors.ErrInternal, "Failed to create user", err)
+		return nil, apperrors.New(apperrors.CodeInternal, "Failed to create user", err)
 	}
 
 	if req.Name == "" {
@@ -44,10 +44,10 @@ func (s *UserService) Register(ctx context.Context, req *RegisterUserRequest) (*
 		Name:           req.Name,
 	})
 	if err != nil {
-		if pqErr, _ := err.(*pq.Error); pqErr.Code == errors.PGErrorCodeUniqueViolation {
-			return nil, errors.NewAppError(errors.ErrConflict, "Username is already in use", err)
+		if pqErr, _ := err.(*pq.Error); pqErr.Code == apperrors.PGErrorCodeUniqueViolation {
+			return nil, apperrors.New(apperrors.CodeConflict, "Username is already in use", err)
 		}
-		return nil, errors.NewAppError(errors.ErrInternal, "Failed to create user", err)
+		return nil, apperrors.New(apperrors.CodeInternal, "Failed to create user", err)
 	}
 
 	return &user, nil
@@ -55,7 +55,7 @@ func (s *UserService) Register(ctx context.Context, req *RegisterUserRequest) (*
 
 type LoginRequest struct {
 	Username string `json:"username" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Password string `json:"password_asd" validate:"required"`
 }
 
 func (s *UserService) TokenLogin(ctx context.Context, req *LoginRequest) (string, error) {
@@ -63,17 +63,17 @@ func (s *UserService) TokenLogin(ctx context.Context, req *LoginRequest) (string
 
 	user, err := s.queries.GetUser(ctx, req.Username)
 	if err != nil {
-		return "", errors.NewAppError(errors.ErrInternal, loginFailedMessage, err)
+		return "", apperrors.New(apperrors.CodeInternal, loginFailedMessage, err)
 	}
 
 	err = utils.CheckHashedPassword(req.Password, user.HashedPassword)
 	if err != nil {
-		return "", errors.NewAppError(errors.ErrInternal, loginFailedMessage, err)
+		return "", apperrors.New(apperrors.CodeInternal, loginFailedMessage, err)
 	}
 
 	token, err := s.jwt.MakeJWT(user, time.Hour*24)
 	if err != nil {
-		return "", errors.NewAppError(errors.ErrInternal, loginFailedMessage, err)
+		return "", apperrors.New(apperrors.CodeInternal, loginFailedMessage, err)
 	}
 
 	return token, nil
