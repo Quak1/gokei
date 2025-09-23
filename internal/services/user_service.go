@@ -23,20 +23,12 @@ func NewUserService(queries *queries.Queries, jwtService *JWTService) *UserServi
 }
 
 type RegisterUserRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
 	Name     string `json:"name"`
 }
 
 func (s *UserService) Register(ctx context.Context, req *RegisterUserRequest) (*queries.User, error) {
-	if req.Username == "" {
-		return nil, errors.NewAppError(errors.ErrValidation, "Username is required", nil)
-	}
-
-	if req.Password == "" {
-		return nil, errors.NewAppError(errors.ErrValidation, "Password is required", nil)
-	}
-
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
 		return nil, errors.NewAppError(errors.ErrInternal, "Failed to create user", err)
@@ -62,18 +54,11 @@ func (s *UserService) Register(ctx context.Context, req *RegisterUserRequest) (*
 }
 
 type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
 func (s *UserService) TokenLogin(ctx context.Context, req *LoginRequest) (string, error) {
-	if req.Username == "" {
-		return "", errors.NewAppError(errors.ErrValidation, "Username is required", nil)
-	}
-	if req.Password == "" {
-		return "", errors.NewAppError(errors.ErrValidation, "Password is required", nil)
-	}
-
 	loginFailedMessage := "Login failed. Please check your credentials."
 
 	user, err := s.queries.GetUser(ctx, req.Username)

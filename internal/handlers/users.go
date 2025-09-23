@@ -1,27 +1,27 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
-	"github.com/Quak1/gokei/internal/errors"
 	"github.com/Quak1/gokei/internal/services"
 	"github.com/Quak1/gokei/internal/utils"
 )
 
 type UserHandler struct {
+	*BaseHandler
 	userService *services.UserService
 }
 
 func NewUserHandler(userService services.UserService) *UserHandler {
 	return &UserHandler{
+		BaseHandler: NewBaseHandler(),
 		userService: &userService,
 	}
 }
 
 func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	params := services.RegisterUserRequest{}
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+	if err := h.ParseRequest(w, r, &params); err != nil {
 		utils.ResError(w, err)
 		return
 	}
@@ -37,7 +37,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) TokenLogin(w http.ResponseWriter, r *http.Request) {
 	params := services.LoginRequest{}
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+	if err := h.ParseRequest(w, r, &params); err != nil {
 		utils.ResError(w, err)
 		return
 	}
@@ -52,9 +52,9 @@ func (h *UserHandler) TokenLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) EchoUsername(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("claims").(*services.JWTCustomClaims)
-	if !ok {
-		utils.ResError(w, errors.NewAppError(errors.ErrInternal, "", nil))
+	claims, err := h.GetJWTClaims(w, r)
+	if err != nil {
+		utils.ResError(w, err)
 		return
 	}
 
