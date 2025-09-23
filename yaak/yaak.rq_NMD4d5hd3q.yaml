@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_NMD4d5hd3q
 createdAt: 2025-09-22T23:32:42.826695882
-updatedAt: 2025-09-22T23:39:07.752845331
+updatedAt: 2025-09-23T23:41:13.997289624
 workspaceId: wk_pq2KvoHKPm
 folderId: null
 authentication: {}
@@ -11,7 +11,7 @@ body:
   text: |-
     {
       "username": "test",
-      "password": "1234"
+      "password_asd": "1234"
     }
 bodyType: application/json
 description: ''
@@ -22,6 +22,6 @@ headers:
   id: ZZEfki6fbE
 method: POST
 name: ''
-sortPriority: -1758583687260.0
+sortPriority: 500.0
 url: ${[ BASE_URL ]}/api/login
 urlParameters: []

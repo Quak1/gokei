@@ -1,0 +1,28 @@
+type: http_request
+model: http_request
+id: rq_42pH5sQowN
+createdAt: 2025-09-23T23:19:36.252229561
+updatedAt: 2025-09-23T23:44:19.207594015
+workspaceId: wk_pq2KvoHKPm
+folderId: null
+authentication:
+  token: ${[ TOKEN ]}
+authenticationType: bearer
+body:
+  text: |-
+    {
+      "accounType": "credit",
+      "name": "bank"
+    }
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: c9B3fiFtE4
+method: POST
+name: ''
+sortPriority: 1000.001
+url: ${[ BASE_URL ]}/api/account
+urlParameters: []

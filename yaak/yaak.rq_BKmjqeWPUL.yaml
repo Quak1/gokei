@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_BKmjqeWPUL
 createdAt: 2025-09-22T23:34:17.052286457
-updatedAt: 2025-09-22T23:39:29.408305297
+updatedAt: 2025-09-23T17:06:19.534014543
 workspaceId: wk_pq2KvoHKPm
 folderId: null
 authentication:
@@ -14,6 +14,6 @@ description: ''
 headers: []
 method: GET
 name: ''
-sortPriority: -1758583687260.0
+sortPriority: 1000.0
 url: ${[ BASE_URL ]}/api/echo
 urlParameters: []

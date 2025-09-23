@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_ADkKggWQHd
 createdAt: 2025-09-22T23:28:07.261685893
-updatedAt: 2025-09-22T23:38:53.294740895
+updatedAt: 2025-09-23T22:02:21.058814425
 workspaceId: wk_pq2KvoHKPm
 folderId: null
 authentication: {}
@@ -10,9 +10,9 @@ authenticationType: null
 body:
   text: |-
     {
-      "username": "test",
+      "username": "test5",
       "password": "1234",
-      "name": "Test User"
+      "name": "Test User 5"
     }
 bodyType: application/json
 description: ''
@@ -23,6 +23,6 @@ headers:
   id: Syuvx8MJyV
 method: POST
 name: BASE_URL/api/register
-sortPriority: -1758583687260.0
+sortPriority: 0.0
 url: ${[ BASE_URL ]}/api/register
 urlParameters: []
