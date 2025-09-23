@@ -1,4 +1,4 @@
-package auth
+package services
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 
 const tokenIssuer = "gokei-access"
 
-type CustomClaims struct {
+type JWTCustomClaims struct {
 	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
@@ -31,7 +31,7 @@ func NewJWTService(tokenSecret []byte) *JWTService {
 }
 
 func (s *JWTService) MakeJWT(user queries.User, expiresIn time.Duration) (string, error) {
-	claims := CustomClaims{
+	claims := JWTCustomClaims{
 		Username: user.Username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    tokenIssuer,
@@ -46,17 +46,17 @@ func (s *JWTService) MakeJWT(user queries.User, expiresIn time.Duration) (string
 	return token.SignedString(s.tokenSecret)
 }
 
-func (s *JWTService) validateJWT(tokenString string) (*CustomClaims, error) {
+func (s *JWTService) validateJWT(tokenString string) (*JWTCustomClaims, error) {
 	errorMessage := "Invalid token"
 
-	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(t *jwt.Token) (any, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &JWTCustomClaims{}, func(t *jwt.Token) (any, error) {
 		return s.tokenSecret, nil
 	}, jwt.WithIssuer(tokenIssuer))
 	if err != nil {
 		return nil, errors.NewAppError(errors.ErrUnauthorized, errorMessage, err)
 	}
 
-	claims, ok := token.Claims.(*CustomClaims)
+	claims, ok := token.Claims.(*JWTCustomClaims)
 	if !ok {
 		return nil, errors.NewAppError(errors.ErrUnauthorized, errorMessage, err)
 	}

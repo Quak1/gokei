@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Quak1/gokei/internal/auth"
 	"github.com/Quak1/gokei/internal/config"
 	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/handlers"
@@ -23,7 +22,7 @@ func main() {
 		fmt.Fprintf(w, "Welcome to the home page!")
 	})
 
-	jwtService := auth.NewJWTService([]byte(cfg.Server.TokenSecret))
+	jwtService := services.NewJWTService([]byte(cfg.Server.TokenSecret))
 	userService := services.NewUserService(db.Queries, jwtService)
 	userHandler := handlers.NewUserHandler(*userService)
 

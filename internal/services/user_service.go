@@ -4,18 +4,18 @@ import (
 	"context"
 	"time"
 
-	"github.com/Quak1/gokei/internal/auth"
 	"github.com/Quak1/gokei/internal/database/queries"
 	"github.com/Quak1/gokei/internal/errors"
+	"github.com/Quak1/gokei/internal/utils"
 	"github.com/lib/pq"
 )
 
 type UserService struct {
 	queries *queries.Queries
-	jwt     *auth.JWTService
+	jwt     *JWTService
 }
 
-func NewUserService(queries *queries.Queries, jwtService *auth.JWTService) *UserService {
+func NewUserService(queries *queries.Queries, jwtService *JWTService) *UserService {
 	return &UserService{
 		queries: queries,
 		jwt:     jwtService,
@@ -37,7 +37,7 @@ func (s *UserService) Register(ctx context.Context, req *RegisterUserRequest) (*
 		return nil, errors.NewAppError(errors.ErrValidation, "Password is required", nil)
 	}
 
-	hashedPassword, err := auth.HashPassword(req.Password)
+	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
 		return nil, errors.NewAppError(errors.ErrInternal, "Failed to create user", err)
 	}
@@ -81,7 +81,7 @@ func (s *UserService) TokenLogin(ctx context.Context, req *LoginRequest) (string
 		return "", errors.NewAppError(errors.ErrInternal, loginFailedMessage, err)
 	}
 
-	err = auth.CheckHashedPassword(req.Password, user.HashedPassword)
+	err = utils.CheckHashedPassword(req.Password, user.HashedPassword)
 	if err != nil {
 		return "", errors.NewAppError(errors.ErrInternal, loginFailedMessage, err)
 	}
