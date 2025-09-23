@@ -24,11 +24,15 @@ func main() {
 
 	jwtService := services.NewJWTService([]byte(cfg.Server.TokenSecret))
 	userService := services.NewUserService(db.Queries, jwtService)
+	accountService := services.NewAccountService(db.Queries)
+
 	userHandler := handlers.NewUserHandler(*userService)
+	accountHandler := handlers.NewAccountHandler(*accountService)
 
 	mux.HandleFunc("POST /api/register", userHandler.Register)
 	mux.HandleFunc("POST /api/login", userHandler.TokenLogin)
 	mux.Handle("GET /api/echo", jwtService.AuthMiddleware(http.HandlerFunc(userHandler.EchoUsername)))
+	mux.Handle("POST /api/account", jwtService.AuthMiddleware(http.HandlerFunc(accountHandler.Create)))
 
 	server := http.Server{
 		Addr:    ":" + cfg.Server.Port,

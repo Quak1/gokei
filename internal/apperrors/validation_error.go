@@ -3,7 +3,6 @@ package apperrors
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -26,7 +25,7 @@ func handleValidationFields(err error) map[string]string {
 	var validateErrs validator.ValidationErrors
 	if errors.As(err, &validateErrs) {
 		for _, e := range validateErrs {
-			field := strings.ToLower(e.Field())
+			field := e.Field()
 			fields[field] = getValidationMessage(e)
 		}
 	}

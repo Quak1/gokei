@@ -14,6 +14,7 @@ const (
 	CodeForbidden    ErrorCode = "FORBIDDEN"
 	CodeConflict     ErrorCode = "CONFLICT"
 	CodeValidation   ErrorCode = "VALIDATION"
+	CodeBadRequest   ErrorCode = "BAD_REQUEST"
 )
 
 var codeToStatus = map[ErrorCode]int{
@@ -23,6 +24,7 @@ var codeToStatus = map[ErrorCode]int{
 	CodeForbidden:    http.StatusForbidden,
 	CodeConflict:     http.StatusConflict,
 	CodeValidation:   http.StatusUnprocessableEntity,
+	CodeBadRequest:   http.StatusBadRequest,
 }
 
 type AppError struct {
