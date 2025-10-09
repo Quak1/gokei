@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -9,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Quak1/gokei/internal/database"
 	_ "github.com/lib/pq"
 )
 
@@ -19,9 +19,7 @@ type config struct {
 	}
 }
 
-type application struct {
-	db *sql.DB
-}
+type application struct{}
 
 func main() {
 	var cfg config
@@ -34,19 +32,18 @@ func main() {
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	db, err := openDB(cfg.db.dsn)
+	db, err := database.OpenDB(cfg.db.dsn)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
+	defer db.Connection.Close()
 
-	app := application{
-		db: db,
-	}
+	app := application{}
 
 	srv := http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
-		Handler:      app.routes(),
+		Handler:      app.routes(db.Queries),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
