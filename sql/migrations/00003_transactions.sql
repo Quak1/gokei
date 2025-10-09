@@ -7,7 +7,7 @@ CREATE TABLE transactions (
   account_id INT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
   category_id INT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
-  date TIMESTAMP NOT NULL,
+  date TIMESTAMP NOT NULL DEFAULT now(),
   attachment TEXT NOT NULL,
   note TEXT NOT NULL
 );
