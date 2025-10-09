@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/Quak1/gokei/internal/database"
+	"github.com/Quak1/gokei/internal/handler"
+	"github.com/Quak1/gokei/internal/service"
 	_ "github.com/lib/pq"
 )
 
@@ -19,7 +21,9 @@ type config struct {
 	}
 }
 
-type application struct{}
+type application struct {
+	handler *handler.Handler
+}
 
 func main() {
 	var cfg config
@@ -39,11 +43,16 @@ func main() {
 	}
 	defer db.Connection.Close()
 
-	app := application{}
+	svc := service.New(db.Queries)
+	h := handler.New(svc, logger)
+
+	app := application{
+		handler: h,
+	}
 
 	srv := http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
-		Handler:      app.routes(db.Queries),
+		Handler:      app.routes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,

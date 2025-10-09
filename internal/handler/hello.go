@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Quak1/gokei/internal/service"
+	"github.com/Quak1/gokei/pkg/response"
 )
 
 type HelloHandler struct {
@@ -19,5 +20,8 @@ func NewHelloHandler(svc *service.HelloService) *HelloHandler {
 func (h *HelloHandler) PingHandler(w http.ResponseWriter, r *http.Request) {
 	msg := h.service.GetMessage()
 
-	w.Write([]byte(msg))
+	err := response.OK(w, response.Envelope{"message": msg})
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+	}
 }
