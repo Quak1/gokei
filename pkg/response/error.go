@@ -3,6 +3,8 @@ package response
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/Quak1/gokei/sql/validator"
 )
 
 func logError(r *http.Request, err error) {
@@ -41,13 +43,13 @@ func MethodNotAllowedResponse(w http.ResponseWriter, r *http.Request) {
 	ErrorResponse(w, r, http.StatusMethodNotAllowed, message)
 }
 
-func BadRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
+func BadRequestResponse(w http.ResponseWriter, r *http.Request) {
 	message := "We couldn't understand your request. Please check your input and try again."
 	ErrorResponse(w, r, http.StatusBadRequest, message)
 }
 
-func FailedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
-	ErrorResponse(w, r, http.StatusUnprocessableEntity, errors)
+func FailedValidationResponse(w http.ResponseWriter, r *http.Request, errors *validator.ValidationError) {
+	ErrorResponse(w, r, http.StatusUnprocessableEntity, errors.Errors)
 }
 
 func UnauthorizedResponse(w http.ResponseWriter, r *http.Request) {

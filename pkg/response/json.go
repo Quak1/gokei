@@ -83,8 +83,8 @@ func OK(w http.ResponseWriter, data Envelope) error {
 	return WriteJSON(w, http.StatusOK, data, nil)
 }
 
-func Created(w http.ResponseWriter, data Envelope) error {
-	return WriteJSON(w, http.StatusCreated, data, nil)
+func Created(w http.ResponseWriter, data Envelope, headers http.Header) error {
+	return WriteJSON(w, http.StatusCreated, data, headers)
 }
 
 func NoContent(w http.ResponseWriter) error {
