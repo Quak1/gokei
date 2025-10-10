@@ -16,16 +16,16 @@ RETURNING id, name, color, icon
 `
 
 type CreateCategoryParams struct {
-	Name  string
-	Color string
-	Icon  string
+	Name  string `json:"name"`
+	Color string `json:"color"`
+	Icon  string `json:"icon"`
 }
 
 type CreateCategoryRow struct {
-	ID    int32
-	Name  string
-	Color string
-	Icon  string
+	ID    int32  `json:"id"`
+	Name  string `json:"name"`
+	Color string `json:"color"`
+	Icon  string `json:"icon"`
 }
 
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (CreateCategoryRow, error) {

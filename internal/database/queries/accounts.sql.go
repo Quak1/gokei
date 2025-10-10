@@ -16,14 +16,14 @@ RETURNING id, type, name
 `
 
 type CreateAccountParams struct {
-	Type AccountType
-	Name string
+	Type AccountType `json:"type"`
+	Name string      `json:"name"`
 }
 
 type CreateAccountRow struct {
-	ID   int32
-	Type AccountType
-	Name string
+	ID   int32       `json:"id"`
+	Type AccountType `json:"type"`
+	Name string      `json:"name"`
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (CreateAccountRow, error) {

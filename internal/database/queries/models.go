@@ -31,8 +31,8 @@ func (e *AccountType) Scan(src interface{}) error {
 }
 
 type NullAccountType struct {
-	AccountType AccountType
-	Valid       bool // Valid is true if AccountType is not NULL
+	AccountType AccountType `json:"account_type"`
+	Valid       bool        `json:"valid"` // Valid is true if AccountType is not NULL
 }
 
 // Scan implements the Scanner interface.
@@ -54,31 +54,31 @@ func (ns NullAccountType) Value() (driver.Value, error) {
 }
 
 type Account struct {
-	ID        int32
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Type      AccountType
-	Name      string
+	ID        int32       `json:"id"`
+	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt time.Time   `json:"updated_at"`
+	Type      AccountType `json:"type"`
+	Name      string      `json:"name"`
 }
 
 type Category struct {
-	ID        int32
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Name      string
-	Color     string
-	Icon      string
+	ID        int32     `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Name      string    `json:"name"`
+	Color     string    `json:"color"`
+	Icon      string    `json:"icon"`
 }
 
 type Transaction struct {
-	ID         int32
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	Amount     int32
-	AccountID  int32
-	CategoryID int32
-	Title      string
-	Date       time.Time
-	Attachment string
-	Note       string
+	ID         int32     `json:"id"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	Amount     int32     `json:"amount"`
+	AccountID  int32     `json:"account_id"`
+	CategoryID int32     `json:"category_id"`
+	Title      string    `json:"title"`
+	Date       time.Time `json:"date"`
+	Attachment string    `json:"attachment"`
+	Note       string    `json:"note"`
 }

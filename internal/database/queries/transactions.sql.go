@@ -16,12 +16,12 @@ RETURNING id, created_at, updated_at, amount, account_id, category_id, title, da
 `
 
 type CreateTransactionParams struct {
-	AccountID  int32
-	Amount     int32
-	CategoryID int32
-	Title      string
-	Attachment string
-	Note       string
+	AccountID  int32  `json:"account_id"`
+	Amount     int32  `json:"amount"`
+	CategoryID int32  `json:"category_id"`
+	Title      string `json:"title"`
+	Attachment string `json:"attachment"`
+	Note       string `json:"note"`
 }
 
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
