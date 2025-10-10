@@ -8,13 +8,15 @@ import (
 )
 
 type Handler struct {
-	Hello *HelloHandler
+	Hello    *HelloHandler
+	Category *CategoryHandler
 }
 
 func New(svc *service.Service, logger *slog.Logger) *Handler {
 	response.SetLogger(logger)
 
 	return &Handler{
-		Hello: NewHelloHandler(svc.Hello),
+		Hello:    NewHelloHandler(svc.Hello),
+		Category: NewCategoryHandler(svc.Category),
 	}
 }

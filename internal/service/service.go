@@ -5,11 +5,13 @@ import (
 )
 
 type Service struct {
-	Hello *HelloService
+	Hello    *HelloService
+	Category *CategoryService
 }
 
 func New(db *queries.Queries) *Service {
 	return &Service{
-		Hello: NewHelloService(db),
+		Hello:    NewHelloService(db),
+		Category: NewCategoryService(db),
 	}
 }
