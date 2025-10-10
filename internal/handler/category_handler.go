@@ -8,7 +8,7 @@ import (
 	"github.com/Quak1/gokei/internal/database/queries"
 	"github.com/Quak1/gokei/internal/service"
 	"github.com/Quak1/gokei/pkg/response"
-	"github.com/Quak1/gokei/sql/validator"
+	"github.com/Quak1/gokei/pkg/validator"
 )
 
 type CategoryHandler struct {
@@ -50,6 +50,19 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	err = response.Created(w, response.Envelope{"category": category}, headers)
 	if err != nil {
-		response.BadRequestResponse(w, r)
+		response.ServerErrorResponse(w, r, err)
+	}
+}
+
+func (h *CategoryHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	categories, err := h.categoryService.GetAll()
+
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+	}
+
+	err = response.OK(w, response.Envelope{"categories": categories})
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
 	}
 }

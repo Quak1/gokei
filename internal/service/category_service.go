@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/Quak1/gokei/internal/database/queries"
-	"github.com/Quak1/gokei/sql/validator"
+	"github.com/Quak1/gokei/pkg/validator"
 )
 
 type CategoryService struct {
@@ -27,7 +27,23 @@ func validateCategory(v *validator.Validator, category *queries.CreateCategoryPa
 	v.Check(validator.NonZero(category.Icon), "icon", "Must be provided")
 }
 
-func (s *CategoryService) Create(category *queries.CreateCategoryParams) (*queries.CreateCategoryRow, error) {
+type PublicCategory struct {
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Color string `json:"color"`
+	Icon  string `json:"icon"`
+}
+
+func toPublicCategory(c queries.Category) *PublicCategory {
+	return &PublicCategory{
+		ID:    int(c.ID),
+		Name:  c.Name,
+		Color: c.Color,
+		Icon:  c.Icon,
+	}
+}
+
+func (s *CategoryService) Create(category *queries.CreateCategoryParams) (*PublicCategory, error) {
 	v := validator.New()
 	if validateCategory(v, category); !v.Valid() {
 		return nil, v.GetErrors()
@@ -38,5 +54,21 @@ func (s *CategoryService) Create(category *queries.CreateCategoryParams) (*queri
 		return nil, err
 	}
 
-	return &data, nil
+	newCategory := toPublicCategory(data)
+
+	return newCategory, nil
+}
+
+func (s *CategoryService) GetAll() ([]*PublicCategory, error) {
+	data, err := s.db.GetAllCategories(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	categories := make([]*PublicCategory, len(data))
+	for i, v := range data {
+		categories[i] = toPublicCategory(v)
+	}
+
+	return categories, nil
 }

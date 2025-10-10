@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Quak1/gokei/sql/validator"
+	"github.com/Quak1/gokei/pkg/validator"
 )
 
 func logError(r *http.Request, err error) {

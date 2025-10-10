@@ -12,7 +12,7 @@ import (
 const createCategory = `-- name: CreateCategory :one
 INSERT INTO categories (name, color, icon) 
 VALUES ($1, $2, $3)
-RETURNING id, name, color, icon
+RETURNING id, created_at, updated_at, name, color, icon
 `
 
 type CreateCategoryParams struct {
@@ -21,18 +21,13 @@ type CreateCategoryParams struct {
 	Icon  string `json:"icon"`
 }
 
-type CreateCategoryRow struct {
-	ID    int32  `json:"id"`
-	Name  string `json:"name"`
-	Color string `json:"color"`
-	Icon  string `json:"icon"`
-}
-
-func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (CreateCategoryRow, error) {
+func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error) {
 	row := q.db.QueryRowContext(ctx, createCategory, arg.Name, arg.Color, arg.Icon)
-	var i CreateCategoryRow
+	var i Category
 	err := row.Scan(
 		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.Name,
 		&i.Color,
 		&i.Icon,
