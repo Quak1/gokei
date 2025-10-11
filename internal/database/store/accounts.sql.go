@@ -12,7 +12,7 @@ import (
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO accounts (type, name) 
 VALUES ($1, $2)
-RETURNING id, type, name
+RETURNING id, created_at, updated_at, type, name
 `
 
 type CreateAccountParams struct {
@@ -20,16 +20,16 @@ type CreateAccountParams struct {
 	Name string      `json:"name"`
 }
 
-type CreateAccountRow struct {
-	ID   int32       `json:"id"`
-	Type AccountType `json:"type"`
-	Name string      `json:"name"`
-}
-
-func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (CreateAccountRow, error) {
+func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
 	row := q.db.QueryRowContext(ctx, createAccount, arg.Type, arg.Name)
-	var i CreateAccountRow
-	err := row.Scan(&i.ID, &i.Type, &i.Name)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Type,
+		&i.Name,
+	)
 	return i, err
 }
 

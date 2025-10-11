@@ -10,6 +10,7 @@ import (
 type Handler struct {
 	Hello    *HelloHandler
 	Category *CategoryHandler
+	Account  *AccountHandler
 }
 
 func New(svc *service.Service, logger *slog.Logger) *Handler {
@@ -18,5 +19,6 @@ func New(svc *service.Service, logger *slog.Logger) *Handler {
 	return &Handler{
 		Hello:    NewHelloHandler(svc.Hello),
 		Category: NewCategoryHandler(svc.Category),
+		Account:  NewAccountHandler(svc.Account),
 	}
 }
