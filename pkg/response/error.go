@@ -43,7 +43,11 @@ func MethodNotAllowedResponse(w http.ResponseWriter, r *http.Request) {
 	ErrorResponse(w, r, http.StatusMethodNotAllowed, message)
 }
 
-func BadRequestResponse(w http.ResponseWriter, r *http.Request) {
+func BadRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
+	ErrorResponse(w, r, http.StatusBadRequest, err.Error())
+}
+
+func BadRequestResponseGeneric(w http.ResponseWriter, r *http.Request, err error) {
 	message := "We couldn't understand your request. Please check your input and try again."
 	ErrorResponse(w, r, http.StatusBadRequest, message)
 }

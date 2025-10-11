@@ -26,7 +26,7 @@ func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	err := response.ReadJSON(w, r, &input)
 	if err != nil {
-		response.BadRequestResponse(w, r)
+		response.BadRequestResponse(w, r, err)
 		return
 	}
 
