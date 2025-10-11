@@ -3,12 +3,12 @@ package database
 import (
 	"database/sql"
 
-	"github.com/Quak1/gokei/internal/database/queries"
+	"github.com/Quak1/gokei/internal/database/store"
 )
 
 type DB struct {
 	Connection *sql.DB
-	Queries    *queries.Queries
+	Queries    *store.Queries
 }
 
 func OpenDB(dsn string) (*DB, error) {
@@ -23,7 +23,7 @@ func OpenDB(dsn string) (*DB, error) {
 		return nil, err
 	}
 
-	queries := queries.New(dbConnection)
+	queries := store.New(dbConnection)
 
 	db := &DB{
 		Connection: dbConnection,

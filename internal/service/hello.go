@@ -1,16 +1,16 @@
 package service
 
 import (
-	"github.com/Quak1/gokei/internal/database/queries"
+	"github.com/Quak1/gokei/internal/database/store"
 )
 
 type HelloService struct {
-	db *queries.Queries
+	queries *store.Queries
 }
 
-func NewHelloService(db *queries.Queries) *HelloService {
+func NewHelloService(queries *store.Queries) *HelloService {
 	return &HelloService{
-		db: db,
+		queries: queries,
 	}
 }
 

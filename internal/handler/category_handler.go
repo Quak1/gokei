@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Quak1/gokei/internal/database/queries"
+	"github.com/Quak1/gokei/internal/database/store"
 	"github.com/Quak1/gokei/internal/service"
 	"github.com/Quak1/gokei/pkg/response"
 	"github.com/Quak1/gokei/pkg/validator"
@@ -22,7 +22,7 @@ func NewCategoryHandler(svc *service.CategoryService) *CategoryHandler {
 }
 
 func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var input queries.CreateCategoryParams
+	var input store.CreateCategoryParams
 
 	err := response.ReadJSON(w, r, &input)
 	if err != nil {
