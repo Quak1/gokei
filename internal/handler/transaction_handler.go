@@ -1,0 +1,67 @@
+package handler
+
+import (
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/Quak1/gokei/internal/database/store"
+	"github.com/Quak1/gokei/internal/service"
+	"github.com/Quak1/gokei/pkg/response"
+	"github.com/Quak1/gokei/pkg/validator"
+)
+
+type TransactionHandler struct {
+	transactionService *service.TransactionService
+}
+
+func NewTransactionHandler(svc *service.TransactionService) *TransactionHandler {
+	return &TransactionHandler{
+		transactionService: svc,
+	}
+}
+
+func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var input store.CreateTransactionParams
+
+	err := response.ReadJSON(w, r, &input)
+	if err != nil {
+		fmt.Println(err)
+		response.BadRequestResponse(w, r, err)
+		return
+	}
+
+	transaction, err := h.transactionService.Create(&input)
+	if err != nil {
+		var validationErr *validator.ValidationError
+
+		switch {
+		case errors.As(err, &validationErr):
+			response.FailedValidationResponse(w, r, validationErr)
+		default:
+			response.ServerErrorResponse(w, r, err)
+		}
+
+		return
+	}
+
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/transactions/%d", transaction.ID))
+
+	err = response.Created(w, response.Envelope{"transaction": transaction}, headers)
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+	}
+}
+
+func (h *TransactionHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	transactions, err := h.transactionService.GetAll()
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+	}
+
+	err = response.OK(w, response.Envelope{"transactions": transactions})
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+	}
+}

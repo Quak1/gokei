@@ -5,15 +5,17 @@ import (
 )
 
 type Service struct {
-	Hello    *HelloService
-	Category *CategoryService
-	Account  *AccountService
+	Hello       *HelloService
+	Category    *CategoryService
+	Account     *AccountService
+	Transaction *TransactionService
 }
 
 func New(queries *store.Queries) *Service {
 	return &Service{
-		Hello:    NewHelloService(queries),
-		Category: NewCategoryService(queries),
-		Account:  NewAccountService(queries),
+		Hello:       NewHelloService(queries),
+		Category:    NewCategoryService(queries),
+		Account:     NewAccountService(queries),
+		Transaction: NewTransactionService(queries),
 	}
 }
