@@ -19,7 +19,7 @@ func NewCategoryService(queries *store.Queries) *CategoryService {
 
 func validateCategory(v *validator.Validator, category *store.CreateCategoryParams) {
 	v.Check(validator.NonZero(category.Name), "name", "Must be provided")
-	v.Check(validator.MaxLength(category.Name, 20), "name", "Must not be more than 10 bytes long")
+	v.Check(validator.MaxLength(category.Name, 20), "name", "Must not be more than 20 bytes long")
 
 	v.Check(validator.NonZero(category.Color), "color", "Must be provided")
 	v.Check(validator.HexColor(category.Color), "color", "Must be valid Hex Color")
