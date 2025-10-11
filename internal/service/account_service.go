@@ -25,35 +25,21 @@ func validateAccount(v *validator.Validator, account *store.CreateAccountParams)
 	v.Check(validator.PermittedValue(account.Type, "debit", "cash", "credit"), "type", "Invalid account type. Valid types are credit, debit, and cash")
 }
 
-type PublicAccount struct {
-	ID   int               `json:"id"`
-	Name string            `json:"name"`
-	Type store.AccountType `json:"type"`
-}
-
-func toPublicAccount(a store.Account) *PublicAccount {
-	return &PublicAccount{
-		ID:   int(a.ID),
-		Name: a.Name,
-		Type: a.Type,
-	}
-}
-
-func (s *AccountService) GetAll() ([]*PublicAccount, error) {
+func (s *AccountService) GetAll() ([]*store.Account, error) {
 	data, err := s.queries.GetAllAccounts(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	accounts := make([]*PublicAccount, len(data))
+	accounts := make([]*store.Account, len(data))
 	for i, a := range data {
-		accounts[i] = toPublicAccount(a)
+		accounts[i] = &a
 	}
 
 	return accounts, nil
 }
 
-func (s *AccountService) Create(account *store.CreateAccountParams) (*PublicAccount, error) {
+func (s *AccountService) Create(account *store.CreateAccountParams) (*store.Account, error) {
 	v := validator.New()
 	if validateAccount(v, account); !v.Valid() {
 		return nil, v.GetErrors()
@@ -64,7 +50,5 @@ func (s *AccountService) Create(account *store.CreateAccountParams) (*PublicAcco
 		return nil, err
 	}
 
-	newAccount := toPublicAccount(data)
-
-	return newAccount, nil
+	return &data, nil
 }

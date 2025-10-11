@@ -55,16 +55,16 @@ func (ns NullAccountType) Value() (driver.Value, error) {
 
 type Account struct {
 	ID        int32       `json:"id"`
-	CreatedAt time.Time   `json:"created_at"`
-	UpdatedAt time.Time   `json:"updated_at"`
+	CreatedAt time.Time   `json:"-"`
+	UpdatedAt time.Time   `json:"-"`
 	Type      AccountType `json:"type"`
 	Name      string      `json:"name"`
 }
 
 type Category struct {
 	ID        int32     `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"-"`
+	UpdatedAt time.Time `json:"-"`
 	Name      string    `json:"name"`
 	Color     string    `json:"color"`
 	Icon      string    `json:"icon"`
@@ -72,8 +72,8 @@ type Category struct {
 
 type Transaction struct {
 	ID         int32     `json:"id"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	CreatedAt  time.Time `json:"-"`
+	UpdatedAt  time.Time `json:"-"`
 	Amount     int32     `json:"amount"`
 	AccountID  int32     `json:"account_id"`
 	CategoryID int32     `json:"category_id"`

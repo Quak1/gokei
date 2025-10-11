@@ -27,23 +27,7 @@ func validateCategory(v *validator.Validator, category *store.CreateCategoryPara
 	v.Check(validator.NonZero(category.Icon), "icon", "Must be provided")
 }
 
-type PublicCategory struct {
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Color string `json:"color"`
-	Icon  string `json:"icon"`
-}
-
-func toPublicCategory(c store.Category) *PublicCategory {
-	return &PublicCategory{
-		ID:    int(c.ID),
-		Name:  c.Name,
-		Color: c.Color,
-		Icon:  c.Icon,
-	}
-}
-
-func (s *CategoryService) Create(category *store.CreateCategoryParams) (*PublicCategory, error) {
+func (s *CategoryService) Create(category *store.CreateCategoryParams) (*store.Category, error) {
 	v := validator.New()
 	if validateCategory(v, category); !v.Valid() {
 		return nil, v.GetErrors()
@@ -54,20 +38,18 @@ func (s *CategoryService) Create(category *store.CreateCategoryParams) (*PublicC
 		return nil, err
 	}
 
-	newCategory := toPublicCategory(data)
-
-	return newCategory, nil
+	return &data, nil
 }
 
-func (s *CategoryService) GetAll() ([]*PublicCategory, error) {
+func (s *CategoryService) GetAll() ([]*store.Category, error) {
 	data, err := s.queries.GetAllCategories(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	categories := make([]*PublicCategory, len(data))
+	categories := make([]*store.Category, len(data))
 	for i, v := range data {
-		categories[i] = toPublicCategory(v)
+		categories[i] = &v
 	}
 
 	return categories, nil
