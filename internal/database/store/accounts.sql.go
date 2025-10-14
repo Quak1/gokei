@@ -12,7 +12,7 @@ import (
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO accounts (type, name) 
 VALUES ($1, $2)
-RETURNING id, created_at, updated_at, type, name
+RETURNING id, created_at, updated_at, type, name, balance_cents
 `
 
 type CreateAccountParams struct {
@@ -29,12 +29,13 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		&i.UpdatedAt,
 		&i.Type,
 		&i.Name,
+		&i.BalanceCents,
 	)
 	return i, err
 }
 
 const getAllAccounts = `-- name: GetAllAccounts :many
-SELECT id, created_at, updated_at, type, name FROM accounts
+SELECT id, created_at, updated_at, type, name, balance_cents FROM accounts
 `
 
 func (q *Queries) GetAllAccounts(ctx context.Context) ([]Account, error) {
@@ -52,6 +53,7 @@ func (q *Queries) GetAllAccounts(ctx context.Context) ([]Account, error) {
 			&i.UpdatedAt,
 			&i.Type,
 			&i.Name,
+			&i.BalanceCents,
 		); err != nil {
 			return nil, err
 		}

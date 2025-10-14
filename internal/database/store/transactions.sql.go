@@ -10,24 +10,24 @@ import (
 )
 
 const createTransaction = `-- name: CreateTransaction :one
-INSERT INTO transactions (account_id, amount, category_id, title, attachment, note) 
+INSERT INTO transactions (account_id, amount_cents, category_id, title, attachment, note)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, created_at, updated_at, amount, account_id, category_id, title, date, attachment, note
+RETURNING id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note
 `
 
 type CreateTransactionParams struct {
-	AccountID  int32  `json:"account_id"`
-	Amount     int32  `json:"amount"`
-	CategoryID int32  `json:"category_id"`
-	Title      string `json:"title"`
-	Attachment string `json:"attachment"`
-	Note       string `json:"note"`
+	AccountID   int32  `json:"account_id"`
+	AmountCents int64  `json:"amount_cents"`
+	CategoryID  int32  `json:"category_id"`
+	Title       string `json:"title"`
+	Attachment  string `json:"attachment"`
+	Note        string `json:"note"`
 }
 
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
 	row := q.db.QueryRowContext(ctx, createTransaction,
 		arg.AccountID,
-		arg.Amount,
+		arg.AmountCents,
 		arg.CategoryID,
 		arg.Title,
 		arg.Attachment,
@@ -38,7 +38,7 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Amount,
+		&i.AmountCents,
 		&i.AccountID,
 		&i.CategoryID,
 		&i.Title,
@@ -50,7 +50,7 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 }
 
 const getAllTransactions = `-- name: GetAllTransactions :many
-SELECT id, created_at, updated_at, amount, account_id, category_id, title, date, attachment, note FROM transactions
+SELECT id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note FROM transactions
 `
 
 func (q *Queries) GetAllTransactions(ctx context.Context) ([]Transaction, error) {
@@ -66,7 +66,7 @@ func (q *Queries) GetAllTransactions(ctx context.Context) ([]Transaction, error)
 			&i.ID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.Amount,
+			&i.AmountCents,
 			&i.AccountID,
 			&i.CategoryID,
 			&i.Title,
