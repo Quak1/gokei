@@ -86,3 +86,42 @@ func (q *Queries) GetAllTransactions(ctx context.Context) ([]Transaction, error)
 	}
 	return items, nil
 }
+
+const getTransactionsByAccountID = `-- name: GetTransactionsByAccountID :many
+SELECT id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note FROM transactions
+WHERE account_id = $1
+`
+
+func (q *Queries) GetTransactionsByAccountID(ctx context.Context, accountID int32) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, getTransactionsByAccountID, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Transaction
+	for rows.Next() {
+		var i Transaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.AmountCents,
+			&i.AccountID,
+			&i.CategoryID,
+			&i.Title,
+			&i.Date,
+			&i.Attachment,
+			&i.Note,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

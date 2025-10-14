@@ -5,3 +5,7 @@ RETURNING *;
 
 -- name: GetAllTransactions :many
 SELECT * FROM transactions;
+
+-- name: GetTransactionsByAccountID :many
+SELECT * FROM transactions
+WHERE account_id = $1;

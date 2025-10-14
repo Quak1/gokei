@@ -47,7 +47,7 @@ func BadRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
 	ErrorResponse(w, r, http.StatusBadRequest, err.Error())
 }
 
-func BadRequestResponseGeneric(w http.ResponseWriter, r *http.Request, err error) {
+func BadRequestResponseGeneric(w http.ResponseWriter, r *http.Request) {
 	message := "We couldn't understand your request. Please check your input and try again."
 	ErrorResponse(w, r, http.StatusBadRequest, message)
 }

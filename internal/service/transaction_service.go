@@ -88,3 +88,17 @@ func (s *TransactionService) Create(transaction *store.CreateTransactionParams) 
 	// TODO return category name?
 	return &newTransaction, nil
 }
+
+func (s *TransactionService) GetAllTRansactionsForAccountID(accountID int) ([]*store.Transaction, error) {
+	data, err := s.queries.GetTransactionsByAccountID(context.Background(), int32(accountID))
+	if err != nil {
+		return nil, err
+	}
+
+	transactions := make([]*store.Transaction, len(data))
+	for i, v := range data {
+		transactions[i] = &v
+	}
+
+	return transactions, nil
+}

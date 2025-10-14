@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/Quak1/gokei/internal/database/store"
 	"github.com/Quak1/gokei/internal/service"
@@ -58,10 +59,33 @@ func (h *TransactionHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	transactions, err := h.transactionService.GetAll()
 	if err != nil {
 		response.ServerErrorResponse(w, r, err)
+		return
 	}
 
 	err = response.OK(w, response.Envelope{"transactions": transactions})
 	if err != nil {
 		response.ServerErrorResponse(w, r, err)
+		return
+	}
+}
+
+func (h *TransactionHandler) GetAccountTransactions(w http.ResponseWriter, r *http.Request) {
+	accountIDString := r.PathValue("accountID")
+	accountID, err := strconv.Atoi(accountIDString)
+	if err != nil {
+		response.BadRequestResponseGeneric(w, r)
+		return
+	}
+
+	transactions, err := h.transactionService.GetAllTRansactionsForAccountID(accountID)
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+		return
+	}
+
+	err = response.OK(w, response.Envelope{"transactions": transactions})
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+		return
 	}
 }

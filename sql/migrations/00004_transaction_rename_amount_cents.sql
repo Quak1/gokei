@@ -9,5 +9,5 @@ RENAME COLUMN amount TO amount_cents;
 ALTER TABLE transactions
 RENAME COLUMN amount_cents TO amount;
 
-ALTER TABLE transactions;
+ALTER TABLE transactions
 ALTER COLUMN amount TYPE INT;
