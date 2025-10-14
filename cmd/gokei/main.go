@@ -43,7 +43,7 @@ func main() {
 	}
 	defer db.Connection.Close()
 
-	svc := service.New(db.Queries)
+	svc := service.New(db)
 	h := handler.New(svc, logger)
 
 	app := application{

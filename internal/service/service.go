@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/Quak1/gokei/internal/database/store"
+	"github.com/Quak1/gokei/internal/database"
 )
 
 type Service struct {
@@ -11,11 +11,11 @@ type Service struct {
 	Transaction *TransactionService
 }
 
-func New(queries *store.Queries) *Service {
+func New(db *database.DB) *Service {
 	return &Service{
-		Hello:       NewHelloService(queries),
-		Category:    NewCategoryService(queries),
-		Account:     NewAccountService(queries),
-		Transaction: NewTransactionService(queries),
+		Hello:       NewHelloService(db.Queries),
+		Category:    NewCategoryService(db.Queries),
+		Account:     NewAccountService(db.Queries),
+		Transaction: NewTransactionService(db.Queries, db.Connection),
 	}
 }

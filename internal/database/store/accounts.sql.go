@@ -67,3 +67,22 @@ func (q *Queries) GetAllAccounts(ctx context.Context) ([]Account, error) {
 	}
 	return items, nil
 }
+
+const updateBalance = `-- name: UpdateBalance :one
+UPDATE accounts
+SET balance_cents = balance_cents + $2
+WHERE id = $1
+RETURNING balance_cents
+`
+
+type UpdateBalanceParams struct {
+	ID           int32 `json:"id"`
+	BalanceCents int64 `json:"balance_cents"`
+}
+
+func (q *Queries) UpdateBalance(ctx context.Context, arg UpdateBalanceParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, updateBalance, arg.ID, arg.BalanceCents)
+	var balance_cents int64
+	err := row.Scan(&balance_cents)
+	return balance_cents, err
+}

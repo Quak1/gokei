@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/Quak1/gokei/internal/database/store"
 	"github.com/Quak1/gokei/pkg/validator"
@@ -9,18 +10,20 @@ import (
 
 type TransactionService struct {
 	queries *store.Queries
+	DB      *sql.DB
 }
 
-func NewTransactionService(queries *store.Queries) *TransactionService {
+func NewTransactionService(queries *store.Queries, db *sql.DB) *TransactionService {
 	return &TransactionService{
 		queries: queries,
+		DB:      db,
 	}
 }
 
 func (s *TransactionService) validateTransaction(v *validator.Validator, transaction *store.CreateTransactionParams) {
 	v.Check(validator.NonZero(transaction.AccountID), "account_id", "Must be provided")
 
-	v.Check(validator.NonZero(transaction.Amount), "amount", "Must be provided")
+	v.Check(validator.NonZero(transaction.AmountCents), "amount", "Must be provided")
 
 	v.Check(validator.NonZero(transaction.CategoryID), "category_id", "Must be provided")
 
@@ -52,7 +55,16 @@ func (s *TransactionService) Create(transaction *store.CreateTransactionParams) 
 		return nil, v.GetErrors()
 	}
 
-	data, err := s.queries.CreateTransaction(context.Background(), *transaction)
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	qtx := s.queries.WithTx(tx)
+	ctx := context.Background()
+
+	newTransaction, err := qtx.CreateTransaction(ctx, *transaction)
 	if err != nil {
 		// TODO handle account or category doesnt exist
 		// pq: insert or update on table \"transactions\" violates foreign key constraint \"transactions_category_id_fkey\"
@@ -60,6 +72,19 @@ func (s *TransactionService) Create(transaction *store.CreateTransactionParams) 
 		return nil, err
 	}
 
+	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
+		ID:           transaction.AccountID,
+		BalanceCents: transaction.AmountCents,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO return category name?
-	return &data, nil
+	return &newTransaction, nil
 }
