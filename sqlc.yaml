@@ -14,3 +14,5 @@ sql:
             go_struct_tag: 'json:"-"'
           - column: "*.updated_at"
             go_struct_tag: 'json:"-"'
+          - column: "*.version"
+            go_struct_tag: 'json:"-"'

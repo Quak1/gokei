@@ -2,7 +2,10 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
+	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/database/store"
 	"github.com/Quak1/gokei/pkg/validator"
 )
@@ -53,4 +56,44 @@ func (s *CategoryService) GetAll() ([]*store.Category, error) {
 	}
 
 	return categories, nil
+}
+
+func (s *CategoryService) GetByID(id int32) (*store.Category, error) {
+	if id < 1 {
+		return nil, database.ErrRecordNotFound
+	}
+
+	category, err := s.queries.GetCategoryByID(context.Background(), id)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, database.ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &category, nil
+}
+
+func (s *CategoryService) DeleteByID(id int32) error {
+	if id < 1 {
+		return database.ErrRecordNotFound
+	}
+
+	result, err := s.queries.DeleteCategoryById(context.Background(), id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return database.ErrRecordNotFound
+	}
+
+	return nil
 }

@@ -69,6 +69,7 @@ type Category struct {
 	Name      string    `json:"name"`
 	Color     string    `json:"color"`
 	Icon      string    `json:"icon"`
+	Version   int32     `json:"-"`
 }
 
 type Transaction struct {

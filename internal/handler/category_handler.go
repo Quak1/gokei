@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/database/store"
 	"github.com/Quak1/gokei/internal/service"
 	"github.com/Quak1/gokei/pkg/response"
@@ -62,6 +63,54 @@ func (h *CategoryHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = response.OK(w, response.Envelope{"categories": categories})
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+	}
+}
+
+func (h *CategoryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	id, err := readIntParam(r, "categoryID")
+	if err != nil {
+		response.BadRequestResponseGeneric(w, r)
+		return
+	}
+
+	category, err := h.categoryService.GetByID(int32(id))
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrRecordNotFound):
+			response.NotFoundResponse(w, r)
+		default:
+			response.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = response.OK(w, response.Envelope{"category": category})
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+	}
+}
+
+func (h *CategoryHandler) DeleteByID(w http.ResponseWriter, r *http.Request) {
+	id, err := readIntParam(r, "categoryID")
+	if err != nil {
+		response.BadRequestResponseGeneric(w, r)
+		return
+	}
+
+	err = h.categoryService.DeleteByID(int32(id))
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrRecordNotFound):
+			response.NotFoundResponse(w, r)
+		default:
+			response.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = response.OK(w, response.Envelope{"message": "category successfully deleted"})
 	if err != nil {
 		response.ServerErrorResponse(w, r, err)
 	}
