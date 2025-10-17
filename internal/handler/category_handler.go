@@ -115,3 +115,39 @@ func (h *CategoryHandler) DeleteByID(w http.ResponseWriter, r *http.Request) {
 		response.ServerErrorResponse(w, r, err)
 	}
 }
+
+func (h *CategoryHandler) UpdateByID(w http.ResponseWriter, r *http.Request) {
+	id, err := readIntParam(r, "categoryID")
+	if err != nil {
+		response.BadRequestResponseGeneric(w, r)
+		return
+	}
+
+	var input service.UpdateCategoryParams
+	err = response.ReadJSON(w, r, &input)
+	if err != nil {
+		response.BadRequestResponse(w, r, err)
+		return
+	}
+
+	category, err := h.categoryService.UpdateByID(int32(id), &input)
+	if err != nil {
+		var validationErr *validator.ValidationError
+		switch {
+		case errors.As(err, &validationErr):
+			response.FailedValidationResponse(w, r, validationErr)
+		case errors.Is(err, database.ErrRecordNotFound):
+			response.NotFoundResponse(w, r)
+		case errors.Is(err, database.ErrEditConflict):
+			response.ConflictResponse(w, r)
+		default:
+			response.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = response.OK(w, response.Envelope{"category": category})
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+	}
+}
