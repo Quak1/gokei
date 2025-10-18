@@ -7,6 +7,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createAccount = `-- name: CreateAccount :one
@@ -31,6 +32,54 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		&i.Name,
 		&i.BalanceCents,
 	)
+	return i, err
+}
+
+const deleteAccountById = `-- name: DeleteAccountById :execresult
+DELETE FROM accounts
+WHERE id = $1
+`
+
+func (q *Queries) DeleteAccountById(ctx context.Context, id int32) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteAccountById, id)
+}
+
+const getAccountByID = `-- name: GetAccountByID :one
+SELECT id, created_at, updated_at, type, name, balance_cents FROM accounts
+WHERE id = $1
+`
+
+func (q *Queries) GetAccountByID(ctx context.Context, id int32) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccountByID, id)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Type,
+		&i.Name,
+		&i.BalanceCents,
+	)
+	return i, err
+}
+
+const getAccountSumBalance = `-- name: GetAccountSumBalance :one
+SELECT accounts.name, SUM(transactions.amount_cents) AS balance
+FROM transactions
+RIGHT JOIN accounts ON transactions.account_id = accounts.id
+WHERE account_id = $1
+GROUP BY accounts.id
+`
+
+type GetAccountSumBalanceRow struct {
+	Name    string `json:"name"`
+	Balance int64  `json:"balance"`
+}
+
+func (q *Queries) GetAccountSumBalance(ctx context.Context, accountID int32) (GetAccountSumBalanceRow, error) {
+	row := q.db.QueryRowContext(ctx, getAccountSumBalance, accountID)
+	var i GetAccountSumBalanceRow
+	err := row.Scan(&i.Name, &i.Balance)
 	return i, err
 }
 

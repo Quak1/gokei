@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/database/store"
 	"github.com/Quak1/gokei/internal/service"
 	"github.com/Quak1/gokei/pkg/response"
@@ -62,6 +63,54 @@ func (h *AccountHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = response.OK(w, response.Envelope{"accounts": accounts})
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+	}
+}
+
+func (h *AccountHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	id, err := readIntParam(r, "accountID")
+	if err != nil {
+		response.BadRequestResponseGeneric(w, r)
+		return
+	}
+
+	account, err := h.accountService.GetByID(int32(id))
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrRecordNotFound):
+			response.NotFoundResponse(w, r)
+		default:
+			response.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = response.OK(w, response.Envelope{"account": account})
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+	}
+}
+
+func (h *AccountHandler) DeleteByID(w http.ResponseWriter, r *http.Request) {
+	id, err := readIntParam(r, "accountID")
+	if err != nil {
+		response.BadRequestResponseGeneric(w, r)
+		return
+	}
+
+	err = h.accountService.DeleteByID(int32(id))
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrRecordNotFound):
+			response.NotFoundResponse(w, r)
+		default:
+			response.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = response.OK(w, response.Envelope{"message": "account successfully deleted"})
 	if err != nil {
 		response.ServerErrorResponse(w, r, err)
 	}

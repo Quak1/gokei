@@ -2,7 +2,10 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
+	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/database/store"
 	"github.com/Quak1/gokei/pkg/validator"
 )
@@ -51,4 +54,44 @@ func (s *AccountService) Create(account *store.CreateAccountParams) (*store.Acco
 	}
 
 	return &data, nil
+}
+
+func (s *AccountService) GetByID(id int32) (*store.Account, error) {
+	if id < 1 {
+		return nil, database.ErrRecordNotFound
+	}
+
+	account, err := s.queries.GetAccountByID(context.Background(), id)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, database.ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &account, nil
+}
+
+func (s *AccountService) DeleteByID(id int32) error {
+	if id < 1 {
+		return database.ErrRecordNotFound
+	}
+
+	result, err := s.queries.DeleteAccountById(context.Background(), id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return database.ErrRecordNotFound
+	}
+
+	return nil
 }
