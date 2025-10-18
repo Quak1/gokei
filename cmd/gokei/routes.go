@@ -18,6 +18,7 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("GET /v1/accounts", app.handler.Account.GetAll)
 	mux.HandleFunc("POST /v1/accounts", app.handler.Account.Create)
 	mux.HandleFunc("GET /v1/accounts/{accountID}", app.handler.Account.GetByID)
+	mux.HandleFunc("GET /v1/accounts/{accountID}/balance", app.handler.Account.GetSumBalance)
 	mux.HandleFunc("GET /v1/accounts/{accountID}/transactions", app.handler.Transaction.GetAccountTransactions)
 	mux.HandleFunc("DELETE /v1/accounts/{accountID}", app.handler.Account.DeleteByID)
 

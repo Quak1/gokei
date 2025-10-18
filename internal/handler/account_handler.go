@@ -115,3 +115,27 @@ func (h *AccountHandler) DeleteByID(w http.ResponseWriter, r *http.Request) {
 		response.ServerErrorResponse(w, r, err)
 	}
 }
+
+func (h *AccountHandler) GetSumBalance(w http.ResponseWriter, r *http.Request) {
+	id, err := readIntParam(r, "accountID")
+	if err != nil {
+		response.BadRequestResponseGeneric(w, r)
+		return
+	}
+
+	balance, err := h.accountService.GetSumBalance(int32(id))
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrRecordNotFound):
+			response.NotFoundResponse(w, r)
+		default:
+			response.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = response.OK(w, response.Envelope{"balance_cents": balance})
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+	}
+}

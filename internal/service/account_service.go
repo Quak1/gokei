@@ -12,11 +12,13 @@ import (
 
 type AccountService struct {
 	queries *store.Queries
+	DB      *sql.DB
 }
 
-func NewAccountService(queries *store.Queries) *AccountService {
+func NewAccountService(queries *store.Queries, db *sql.DB) *AccountService {
 	return &AccountService{
 		queries: queries,
+		DB:      db,
 	}
 }
 
@@ -48,12 +50,36 @@ func (s *AccountService) Create(account *store.CreateAccountParams) (*store.Acco
 		return nil, v.GetErrors()
 	}
 
-	data, err := s.queries.CreateAccount(context.Background(), *account)
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	qtx := s.queries.WithTx(tx)
+	ctx := context.Background()
+
+	newAccount, err := qtx.CreateAccount(ctx, *account)
 	if err != nil {
 		return nil, err
 	}
 
-	return &data, nil
+	_, err = qtx.CreateTransaction(ctx, store.CreateTransactionParams{
+		AccountID:   newAccount.ID,
+		AmountCents: 0,
+		CategoryID:  1,
+		Title:       "Initial balance",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &newAccount, nil
 }
 
 func (s *AccountService) GetByID(id int32) (*store.Account, error) {
@@ -94,4 +120,22 @@ func (s *AccountService) DeleteByID(id int32) error {
 	}
 
 	return nil
+}
+
+func (s *AccountService) GetSumBalance(id int32) (int64, error) {
+	if id < 1 {
+		return 0, database.ErrRecordNotFound
+	}
+
+	balance, err := s.queries.GetAccountSumBalance(context.Background(), id)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return 0, database.ErrRecordNotFound
+		default:
+			return 0, err
+		}
+	}
+
+	return balance.Balance, nil
 }

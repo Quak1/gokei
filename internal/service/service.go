@@ -15,7 +15,7 @@ func New(db *database.DB) *Service {
 	return &Service{
 		Hello:       NewHelloService(db.Queries),
 		Category:    NewCategoryService(db.Queries),
-		Account:     NewAccountService(db.Queries),
+		Account:     NewAccountService(db.Queries, db.Connection),
 		Transaction: NewTransactionService(db.Queries, db.Connection),
 	}
 }
