@@ -13,7 +13,7 @@ import (
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO accounts (type, name) 
 VALUES ($1, $2)
-RETURNING id, created_at, updated_at, type, name, balance_cents
+RETURNING id, created_at, updated_at, type, name, balance_cents, version
 `
 
 type CreateAccountParams struct {
@@ -31,6 +31,7 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		&i.Type,
 		&i.Name,
 		&i.BalanceCents,
+		&i.Version,
 	)
 	return i, err
 }
@@ -45,7 +46,7 @@ func (q *Queries) DeleteAccountById(ctx context.Context, id int32) (sql.Result, 
 }
 
 const getAccountByID = `-- name: GetAccountByID :one
-SELECT id, created_at, updated_at, type, name, balance_cents FROM accounts
+SELECT id, created_at, updated_at, type, name, balance_cents, version FROM accounts
 WHERE id = $1
 `
 
@@ -59,6 +60,7 @@ func (q *Queries) GetAccountByID(ctx context.Context, id int32) (Account, error)
 		&i.Type,
 		&i.Name,
 		&i.BalanceCents,
+		&i.Version,
 	)
 	return i, err
 }
@@ -84,7 +86,7 @@ func (q *Queries) GetAccountSumBalance(ctx context.Context, accountID int32) (Ge
 }
 
 const getAllAccounts = `-- name: GetAllAccounts :many
-SELECT id, created_at, updated_at, type, name, balance_cents FROM accounts
+SELECT id, created_at, updated_at, type, name, balance_cents, version FROM accounts
 `
 
 func (q *Queries) GetAllAccounts(ctx context.Context) ([]Account, error) {
@@ -103,6 +105,7 @@ func (q *Queries) GetAllAccounts(ctx context.Context) ([]Account, error) {
 			&i.Type,
 			&i.Name,
 			&i.BalanceCents,
+			&i.Version,
 		); err != nil {
 			return nil, err
 		}
@@ -115,6 +118,28 @@ func (q *Queries) GetAllAccounts(ctx context.Context) ([]Account, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateAccountById = `-- name: UpdateAccountById :execresult
+UPDATE accounts
+SET name = $1, type = $2, version = version + 1
+WHERE id = $3 AND version = $4
+`
+
+type UpdateAccountByIdParams struct {
+	Name    string      `json:"name"`
+	Type    AccountType `json:"type"`
+	ID      int32       `json:"id"`
+	Version int32       `json:"-"`
+}
+
+func (q *Queries) UpdateAccountById(ctx context.Context, arg UpdateAccountByIdParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateAccountById,
+		arg.Name,
+		arg.Type,
+		arg.ID,
+		arg.Version,
+	)
 }
 
 const updateBalance = `-- name: UpdateBalance :one

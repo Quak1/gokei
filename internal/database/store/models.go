@@ -60,6 +60,7 @@ type Account struct {
 	Type         AccountType `json:"type"`
 	Name         string      `json:"name"`
 	BalanceCents int64       `json:"balance_cents"`
+	Version      int32       `json:"-"`
 }
 
 type Category struct {

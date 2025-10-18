@@ -26,3 +26,8 @@ FROM transactions
 RIGHT JOIN accounts ON transactions.account_id = accounts.id
 WHERE account_id = $1
 GROUP BY accounts.id;
+
+-- name: UpdateAccountById :execresult
+UPDATE accounts
+SET name = $1, type = $2, version = version + 1
+WHERE id = $3 AND version = $4;
