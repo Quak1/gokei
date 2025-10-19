@@ -14,9 +14,10 @@ WHERE account_id = $1;
 SELECT * FROM transactions
 WHERE id = $1;
 
--- name: DeleteTransactionByID :execresult
+-- name: DeleteTransactionByID :one
 DELETE FROM transactions
-WHERE id = $1;
+WHERE id = $1
+RETURNING *;
 
 -- name: UpdateTransactionById :execresult
 UPDATE transactions

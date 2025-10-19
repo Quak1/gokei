@@ -52,13 +52,29 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 	return i, err
 }
 
-const deleteTransactionByID = `-- name: DeleteTransactionByID :execresult
+const deleteTransactionByID = `-- name: DeleteTransactionByID :one
 DELETE FROM transactions
 WHERE id = $1
+RETURNING id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note, version
 `
 
-func (q *Queries) DeleteTransactionByID(ctx context.Context, id int32) (sql.Result, error) {
-	return q.db.ExecContext(ctx, deleteTransactionByID, id)
+func (q *Queries) DeleteTransactionByID(ctx context.Context, id int32) (Transaction, error) {
+	row := q.db.QueryRowContext(ctx, deleteTransactionByID, id)
+	var i Transaction
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.AmountCents,
+		&i.AccountID,
+		&i.CategoryID,
+		&i.Title,
+		&i.Date,
+		&i.Attachment,
+		&i.Note,
+		&i.Version,
+	)
+	return i, err
 }
 
 const getAllTransactions = `-- name: GetAllTransactions :many

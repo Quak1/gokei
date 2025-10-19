@@ -26,7 +26,7 @@ func NewTransactionService(queries *store.Queries, db *sql.DB) *TransactionServi
 func validateTransaction(v *validator.Validator, transaction *store.Transaction) {
 	v.Check(validator.NonZero(transaction.AccountID), "account_id", "Must be provided")
 
-	v.Check(validator.NonZero(transaction.AmountCents), "amount", "Must be provided")
+	v.Check(validator.NonZero(transaction.AmountCents), "amount_cents", "Must be provided")
 
 	v.Check(validator.NonZero(transaction.CategoryID), "category_id", "Must be provided")
 
@@ -138,18 +138,36 @@ func (s *TransactionService) DeleteByID(id int32) error {
 		return database.ErrRecordNotFound
 	}
 
-	result, err := s.queries.DeleteTransactionByID(context.Background(), id)
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	qtx := s.queries.WithTx(tx)
+	ctx := context.Background()
+
+	transaction, err := qtx.DeleteTransactionByID(ctx, id)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return database.ErrRecordNotFound
+		default:
+			return err
+		}
+	}
+
+	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
+		ID:           transaction.AccountID,
+		BalanceCents: -transaction.AmountCents,
+	})
 	if err != nil {
 		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	err = tx.Commit()
 	if err != nil {
 		return err
-	}
-
-	if rowsAffected == 0 {
-		return database.ErrRecordNotFound
 	}
 
 	return nil
@@ -170,9 +188,16 @@ func (s *TransactionService) UpdateByID(id int32, updateParams *UpdateTransactio
 		return nil, database.ErrRecordNotFound
 	}
 
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	qtx := s.queries.WithTx(tx)
 	ctx := context.Background()
 
-	transaction, err := s.queries.GetTransactionByID(ctx, id)
+	transaction, err := qtx.GetTransactionByID(ctx, id)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -181,6 +206,9 @@ func (s *TransactionService) UpdateByID(id int32, updateParams *UpdateTransactio
 			return nil, err
 		}
 	}
+
+	oldAmount := transaction.AmountCents
+	oldAccountID := transaction.AccountID
 
 	if updateParams.AmountCents != nil {
 		transaction.AmountCents = *updateParams.AmountCents
@@ -231,6 +259,27 @@ func (s *TransactionService) UpdateByID(id int32, updateParams *UpdateTransactio
 
 	if rowsAffected == 0 {
 		return nil, database.ErrEditConflict
+	}
+
+	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
+		ID:           oldAccountID,
+		BalanceCents: -oldAmount,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
+		ID:           transaction.AccountID,
+		BalanceCents: transaction.AmountCents,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
 	}
 
 	return &transaction, nil
