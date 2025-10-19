@@ -107,6 +107,10 @@ func (s *TransactionService) GetAllTRansactionsForAccountID(accountID int) ([]*s
 		return nil, err
 	}
 
+	if len(data) == 0 {
+		return nil, database.ErrRecordNotFound
+	}
+
 	transactions := make([]*store.Transaction, len(data))
 	for i, v := range data {
 		transactions[i] = &v

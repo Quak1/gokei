@@ -78,7 +78,12 @@ func (h *TransactionHandler) GetAccountTransactions(w http.ResponseWriter, r *ht
 
 	transactions, err := h.transactionService.GetAllTRansactionsForAccountID(accountID)
 	if err != nil {
-		response.ServerErrorResponse(w, r, err)
+		switch {
+		case errors.Is(err, database.ErrRecordNotFound):
+			response.NotFoundResponse(w, r)
+		default:
+			response.ServerErrorResponse(w, r, err)
+		}
 		return
 	}
 
