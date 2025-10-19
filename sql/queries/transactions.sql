@@ -17,3 +17,8 @@ WHERE id = $1;
 -- name: DeleteTransactionByID :execresult
 DELETE FROM transactions
 WHERE id = $1;
+
+-- name: UpdateTransactionById :execresult
+UPDATE transactions
+SET amount_cents = $3, account_id = $4, category_id = $5, title = $6, date = $7, attachment = $8, note = $9, version = version + 1
+WHERE id = $1 AND version = $2;

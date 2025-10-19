@@ -8,12 +8,13 @@ package store
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 const createTransaction = `-- name: CreateTransaction :one
 INSERT INTO transactions (account_id, amount_cents, category_id, title, attachment, note)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note
+RETURNING id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note, version
 `
 
 type CreateTransactionParams struct {
@@ -46,6 +47,7 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		&i.Date,
 		&i.Attachment,
 		&i.Note,
+		&i.Version,
 	)
 	return i, err
 }
@@ -60,7 +62,7 @@ func (q *Queries) DeleteTransactionByID(ctx context.Context, id int32) (sql.Resu
 }
 
 const getAllTransactions = `-- name: GetAllTransactions :many
-SELECT id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note FROM transactions
+SELECT id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note, version FROM transactions
 `
 
 func (q *Queries) GetAllTransactions(ctx context.Context) ([]Transaction, error) {
@@ -83,6 +85,7 @@ func (q *Queries) GetAllTransactions(ctx context.Context) ([]Transaction, error)
 			&i.Date,
 			&i.Attachment,
 			&i.Note,
+			&i.Version,
 		); err != nil {
 			return nil, err
 		}
@@ -98,7 +101,7 @@ func (q *Queries) GetAllTransactions(ctx context.Context) ([]Transaction, error)
 }
 
 const getTransactionByID = `-- name: GetTransactionByID :one
-SELECT id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note FROM transactions
+SELECT id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note, version FROM transactions
 WHERE id = $1
 `
 
@@ -116,12 +119,13 @@ func (q *Queries) GetTransactionByID(ctx context.Context, id int32) (Transaction
 		&i.Date,
 		&i.Attachment,
 		&i.Note,
+		&i.Version,
 	)
 	return i, err
 }
 
 const getTransactionsByAccountID = `-- name: GetTransactionsByAccountID :many
-SELECT id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note FROM transactions
+SELECT id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note, version FROM transactions
 WHERE account_id = $1
 `
 
@@ -145,6 +149,7 @@ func (q *Queries) GetTransactionsByAccountID(ctx context.Context, accountID int3
 			&i.Date,
 			&i.Attachment,
 			&i.Note,
+			&i.Version,
 		); err != nil {
 			return nil, err
 		}
@@ -157,4 +162,36 @@ func (q *Queries) GetTransactionsByAccountID(ctx context.Context, accountID int3
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateTransactionById = `-- name: UpdateTransactionById :execresult
+UPDATE transactions
+SET amount_cents = $3, account_id = $4, category_id = $5, title = $6, date = $7, attachment = $8, note = $9, version = version + 1
+WHERE id = $1 AND version = $2
+`
+
+type UpdateTransactionByIdParams struct {
+	ID          int32     `json:"id"`
+	Version     int32     `json:"-"`
+	AmountCents int64     `json:"amount_cents"`
+	AccountID   int32     `json:"account_id"`
+	CategoryID  int32     `json:"category_id"`
+	Title       string    `json:"title"`
+	Date        time.Time `json:"date"`
+	Attachment  string    `json:"attachment"`
+	Note        string    `json:"note"`
+}
+
+func (q *Queries) UpdateTransactionById(ctx context.Context, arg UpdateTransactionByIdParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateTransactionById,
+		arg.ID,
+		arg.Version,
+		arg.AmountCents,
+		arg.AccountID,
+		arg.CategoryID,
+		arg.Title,
+		arg.Date,
+		arg.Attachment,
+		arg.Note,
+	)
 }

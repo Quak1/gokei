@@ -84,4 +84,5 @@ type Transaction struct {
 	Date        time.Time `json:"date"`
 	Attachment  string    `json:"attachment"`
 	Note        string    `json:"note"`
+	Version     int32     `json:"-"`
 }

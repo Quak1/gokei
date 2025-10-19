@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/database/store"
@@ -22,7 +23,7 @@ func NewTransactionService(queries *store.Queries, db *sql.DB) *TransactionServi
 	}
 }
 
-func (s *TransactionService) validateTransaction(v *validator.Validator, transaction *store.CreateTransactionParams) {
+func validateTransaction(v *validator.Validator, transaction *store.Transaction) {
 	v.Check(validator.NonZero(transaction.AccountID), "account_id", "Must be provided")
 
 	v.Check(validator.NonZero(transaction.AmountCents), "amount", "Must be provided")
@@ -51,9 +52,18 @@ func (s *TransactionService) GetAll() ([]*store.Transaction, error) {
 	return transactions, nil
 }
 
-func (s *TransactionService) Create(transaction *store.CreateTransactionParams) (*store.Transaction, error) {
+func (s *TransactionService) Create(transactionParams *store.CreateTransactionParams) (*store.Transaction, error) {
+	transaction := &store.Transaction{
+		AccountID:   transactionParams.AccountID,
+		AmountCents: transactionParams.AmountCents,
+		CategoryID:  transactionParams.CategoryID,
+		Title:       transactionParams.Title,
+		Attachment:  transactionParams.Attachment,
+		Note:        transactionParams.Note,
+	}
+
 	v := validator.New()
-	if s.validateTransaction(v, transaction); !v.Valid() {
+	if validateTransaction(v, transaction); !v.Valid() {
 		return nil, v.GetErrors()
 	}
 
@@ -66,7 +76,7 @@ func (s *TransactionService) Create(transaction *store.CreateTransactionParams) 
 	qtx := s.queries.WithTx(tx)
 	ctx := context.Background()
 
-	newTransaction, err := qtx.CreateTransaction(ctx, *transaction)
+	newTransaction, err := qtx.CreateTransaction(ctx, *transactionParams)
 	if err != nil {
 		// TODO handle account or category doesnt exist
 		// pq: insert or update on table \"transactions\" violates foreign key constraint \"transactions_category_id_fkey\"
@@ -124,7 +134,7 @@ func (s *TransactionService) GetByID(id int32) (*store.Transaction, error) {
 }
 
 func (s *TransactionService) DeleteByID(id int32) error {
-	if id < 2 {
+	if id < 1 {
 		return database.ErrRecordNotFound
 	}
 
@@ -143,4 +153,85 @@ func (s *TransactionService) DeleteByID(id int32) error {
 	}
 
 	return nil
+}
+
+type UpdateTransactionParams struct {
+	AmountCents *int64     `json:"amount_cents"`
+	AccountID   *int32     `json:"account_id"`
+	CategoryID  *int32     `json:"category_id"`
+	Title       *string    `json:"title"`
+	Date        *time.Time `json:"date"`
+	Attachment  *string    `json:"attachment"`
+	Note        *string    `json:"note"`
+}
+
+func (s *TransactionService) UpdateByID(id int32, updateParams *UpdateTransactionParams) (*store.Transaction, error) {
+	if id < 1 {
+		return nil, database.ErrRecordNotFound
+	}
+
+	ctx := context.Background()
+
+	transaction, err := s.queries.GetTransactionByID(ctx, id)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, database.ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	if updateParams.AmountCents != nil {
+		transaction.AmountCents = *updateParams.AmountCents
+	}
+	if updateParams.AccountID != nil {
+		transaction.AccountID = *updateParams.AccountID
+	}
+	if updateParams.CategoryID != nil {
+		transaction.CategoryID = *updateParams.CategoryID
+	}
+	if updateParams.Title != nil {
+		transaction.Title = *updateParams.Title
+	}
+	if updateParams.Date != nil {
+		transaction.Date = *updateParams.Date
+	}
+	if updateParams.Attachment != nil {
+		transaction.Attachment = *updateParams.Attachment
+	}
+	if updateParams.Note != nil {
+		transaction.Note = *updateParams.Note
+	}
+
+	v := validator.New()
+	if validateTransaction(v, &transaction); !v.Valid() {
+		return nil, v.GetErrors()
+	}
+
+	result, err := s.queries.UpdateTransactionById(ctx, store.UpdateTransactionByIdParams{
+		ID:          transaction.ID,
+		Version:     transaction.Version,
+		AmountCents: transaction.AmountCents,
+		AccountID:   transaction.AccountID,
+		CategoryID:  transaction.CategoryID,
+		Title:       transaction.Title,
+		Date:        transaction.Date,
+		Attachment:  transaction.Attachment,
+		Note:        transaction.Note,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+
+	if rowsAffected == 0 {
+		return nil, database.ErrEditConflict
+	}
+
+	return &transaction, nil
 }
