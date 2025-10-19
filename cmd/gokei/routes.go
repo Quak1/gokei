@@ -25,6 +25,8 @@ func (app *application) routes() http.Handler {
 
 	mux.HandleFunc("GET /v1/transactions", app.handler.Transaction.GetAll)
 	mux.HandleFunc("POST /v1/transactions", app.handler.Transaction.Create)
+	mux.HandleFunc("GET /v1/transactions/{transactionID}", app.handler.Transaction.GetByID)
+	mux.HandleFunc("DELETE /v1/transactions/{transactionID}", app.handler.Transaction.DeleteByID)
 
 	return mux
 }

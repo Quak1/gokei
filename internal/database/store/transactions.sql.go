@@ -7,6 +7,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createTransaction = `-- name: CreateTransaction :one
@@ -49,6 +50,15 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 	return i, err
 }
 
+const deleteTransactionByID = `-- name: DeleteTransactionByID :execresult
+DELETE FROM transactions
+WHERE id = $1
+`
+
+func (q *Queries) DeleteTransactionByID(ctx context.Context, id int32) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteTransactionByID, id)
+}
+
 const getAllTransactions = `-- name: GetAllTransactions :many
 SELECT id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note FROM transactions
 `
@@ -85,6 +95,29 @@ func (q *Queries) GetAllTransactions(ctx context.Context) ([]Transaction, error)
 		return nil, err
 	}
 	return items, nil
+}
+
+const getTransactionByID = `-- name: GetTransactionByID :one
+SELECT id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note FROM transactions
+WHERE id = $1
+`
+
+func (q *Queries) GetTransactionByID(ctx context.Context, id int32) (Transaction, error) {
+	row := q.db.QueryRowContext(ctx, getTransactionByID, id)
+	var i Transaction
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.AmountCents,
+		&i.AccountID,
+		&i.CategoryID,
+		&i.Title,
+		&i.Date,
+		&i.Attachment,
+		&i.Note,
+	)
+	return i, err
 }
 
 const getTransactionsByAccountID = `-- name: GetTransactionsByAccountID :many
