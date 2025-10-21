@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
@@ -30,6 +31,12 @@ func OpenDB(dsn string) (*DB, error) {
 	}
 
 	queries := store.New(dbConnection)
+
+	err = queries.InsertInitialCategory(context.Background())
+	if err != nil {
+		dbConnection.Close()
+		return nil, err
+	}
 
 	db := &DB{
 		Connection: dbConnection,
