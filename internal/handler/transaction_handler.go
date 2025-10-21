@@ -39,6 +39,8 @@ func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.As(err, &validationErr):
 			response.FailedValidationResponse(w, r, validationErr)
+		case errors.Is(err, database.ErrInvalidAccount), errors.Is(err, database.ErrInvalidCategory):
+			response.BadRequestResponse(w, r, err)
 		default:
 			response.ServerErrorResponse(w, r, err)
 		}
@@ -166,6 +168,8 @@ func (h *TransactionHandler) UpdateByID(w http.ResponseWriter, r *http.Request) 
 			response.NotFoundResponse(w, r)
 		case errors.Is(err, database.ErrEditConflict):
 			response.ConflictResponse(w, r)
+		case errors.Is(err, database.ErrInvalidAccount), errors.Is(err, database.ErrInvalidCategory):
+			response.BadRequestResponse(w, r, err)
 		default:
 			response.ServerErrorResponse(w, r, err)
 		}

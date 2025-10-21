@@ -78,10 +78,7 @@ func (s *TransactionService) Create(transactionParams *store.CreateTransactionPa
 
 	newTransaction, err := qtx.CreateTransaction(ctx, *transactionParams)
 	if err != nil {
-		// TODO handle account or category doesnt exist
-		// pq: insert or update on table \"transactions\" violates foreign key constraint \"transactions_category_id_fkey\"
-		// pq: insert or update on table \"transactions\" violates foreign key constraint \"transactions_account_id_fkey\"
-		return nil, err
+		return nil, database.HandleForeignKeyError(err)
 	}
 
 	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
@@ -253,7 +250,7 @@ func (s *TransactionService) UpdateByID(id int32, updateParams *UpdateTransactio
 		Note:        transaction.Note,
 	})
 	if err != nil {
-		return nil, err
+		return nil, database.HandleForeignKeyError(err)
 	}
 
 	rowsAffected, err := result.RowsAffected()

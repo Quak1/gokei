@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"database/sql"
-	"errors"
 
 	"github.com/Quak1/gokei/internal/database/store"
 )
@@ -12,11 +11,6 @@ type DB struct {
 	Connection *sql.DB
 	Queries    *store.Queries
 }
-
-var (
-	ErrRecordNotFound = errors.New("record not found")
-	ErrEditConflict   = errors.New("edit conflict")
-)
 
 func OpenDB(dsn string) (*DB, error) {
 	dbConnection, err := sql.Open("postgres", dsn)
