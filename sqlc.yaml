@@ -16,3 +16,5 @@ sql:
             go_struct_tag: 'json:"-"'
           - column: "*.version"
             go_struct_tag: 'json:"-"'
+          - column: "users.password_hash"
+            go_struct_tag: 'json:"-"'

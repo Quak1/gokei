@@ -74,3 +74,7 @@ func NonZero[T comparable](value T) bool {
 func MaxLength(value string, size int) bool {
 	return len(value) <= size
 }
+
+func MinLength(value string, size int) bool {
+	return len(value) >= size
+}

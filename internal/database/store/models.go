@@ -61,6 +61,7 @@ type Account struct {
 	Name         string      `json:"name"`
 	BalanceCents int64       `json:"balance_cents"`
 	Version      int32       `json:"-"`
+	UserID       int32       `json:"user_id"`
 }
 
 type Category struct {
@@ -85,4 +86,14 @@ type Transaction struct {
 	Attachment  string    `json:"attachment"`
 	Note        string    `json:"note"`
 	Version     int32     `json:"-"`
+}
+
+type User struct {
+	ID           int32     `json:"id"`
+	CreatedAt    time.Time `json:"-"`
+	UpdatedAt    time.Time `json:"-"`
+	Version      int32     `json:"-"`
+	Username     string    `json:"username"`
+	Name         string    `json:"name"`
+	PasswordHash []byte    `json:"-"`
 }

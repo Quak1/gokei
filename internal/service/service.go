@@ -9,6 +9,7 @@ type Service struct {
 	Category    *CategoryService
 	Account     *AccountService
 	Transaction *TransactionService
+	User        *UserService
 }
 
 func New(db *database.DB) *Service {
@@ -17,5 +18,6 @@ func New(db *database.DB) *Service {
 		Category:    NewCategoryService(db.Queries),
 		Account:     NewAccountService(db.Queries, db.Connection),
 		Transaction: NewTransactionService(db.Queries, db.Connection),
+		User:        NewUserService(db.Queries),
 	}
 }

@@ -30,3 +30,11 @@ func HandleForeignKeyError(err error) error {
 
 	return err
 }
+
+func IsUniqueContraintViolation(err error) bool {
+	if pqErr, ok := err.(*pq.Error); ok {
+		return pqErr.Code == "23505"
+	}
+
+	return false
+}
