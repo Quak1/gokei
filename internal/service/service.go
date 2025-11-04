@@ -10,6 +10,7 @@ type Service struct {
 	Account     *AccountService
 	Transaction *TransactionService
 	User        *UserService
+	Token       *TokenService
 }
 
 func New(db *database.DB) *Service {
@@ -19,5 +20,6 @@ func New(db *database.DB) *Service {
 		Account:     NewAccountService(db.Queries, db.Connection),
 		Transaction: NewTransactionService(db.Queries, db.Connection),
 		User:        NewUserService(db.Queries),
+		Token:       NewTokenService(db.Queries),
 	}
 }

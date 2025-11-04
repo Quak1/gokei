@@ -13,7 +13,7 @@ import (
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO accounts (type, name) 
 VALUES ($1, $2)
-RETURNING id, created_at, updated_at, type, name, balance_cents, version, user_id
+RETURNING id, created_at, updated_at, type, name, balance_cents, version
 `
 
 type CreateAccountParams struct {
@@ -32,7 +32,6 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		&i.Name,
 		&i.BalanceCents,
 		&i.Version,
-		&i.UserID,
 	)
 	return i, err
 }
@@ -47,7 +46,7 @@ func (q *Queries) DeleteAccountById(ctx context.Context, id int32) (sql.Result, 
 }
 
 const getAccountByID = `-- name: GetAccountByID :one
-SELECT id, created_at, updated_at, type, name, balance_cents, version, user_id FROM accounts
+SELECT id, created_at, updated_at, type, name, balance_cents, version FROM accounts
 WHERE id = $1
 `
 
@@ -62,7 +61,6 @@ func (q *Queries) GetAccountByID(ctx context.Context, id int32) (Account, error)
 		&i.Name,
 		&i.BalanceCents,
 		&i.Version,
-		&i.UserID,
 	)
 	return i, err
 }
@@ -88,7 +86,7 @@ func (q *Queries) GetAccountSumBalance(ctx context.Context, accountID int32) (Ge
 }
 
 const getAllAccounts = `-- name: GetAllAccounts :many
-SELECT id, created_at, updated_at, type, name, balance_cents, version, user_id FROM accounts
+SELECT id, created_at, updated_at, type, name, balance_cents, version FROM accounts
 `
 
 func (q *Queries) GetAllAccounts(ctx context.Context) ([]Account, error) {
@@ -108,7 +106,6 @@ func (q *Queries) GetAllAccounts(ctx context.Context) ([]Account, error) {
 			&i.Name,
 			&i.BalanceCents,
 			&i.Version,
-			&i.UserID,
 		); err != nil {
 			return nil, err
 		}

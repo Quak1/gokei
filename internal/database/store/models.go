@@ -61,7 +61,6 @@ type Account struct {
 	Name         string      `json:"name"`
 	BalanceCents int64       `json:"balance_cents"`
 	Version      int32       `json:"-"`
-	UserID       int32       `json:"user_id"`
 }
 
 type Category struct {
@@ -72,6 +71,12 @@ type Category struct {
 	Color     string    `json:"color"`
 	Icon      string    `json:"icon"`
 	Version   int32     `json:"-"`
+}
+
+type Token struct {
+	Hash   []byte    `json:"hash"`
+	UserID int32     `json:"user_id"`
+	Expiry time.Time `json:"expiry"`
 }
 
 type Transaction struct {
