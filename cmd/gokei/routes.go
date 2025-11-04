@@ -13,6 +13,7 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("GET /v1/users/{userID}", app.handler.User.GetByID)
 	mux.HandleFunc("PUT /v1/users/{userID}", app.handler.User.UpdateByID)
 	mux.HandleFunc("DELETE /v1/users/{userID}", app.handler.User.DeleteByID)
+	mux.HandleFunc("POST /v1/users/login", app.handler.User.Login)
 
 	mux.HandleFunc("GET /v1/categories", app.handler.Category.GetAll)
 	mux.HandleFunc("POST /v1/categories", app.handler.Category.Create)

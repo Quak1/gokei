@@ -65,6 +65,7 @@ func ForbiddenResponse(w http.ResponseWriter, r *http.Request) {
 	message := "You don't have permission to access this resource."
 	ErrorResponse(w, r, http.StatusForbidden, message)
 }
+
 func ConflictResponse(w http.ResponseWriter, r *http.Request) {
 	message := "This resource already exists or conflicts with an existing resource."
 	ErrorResponse(w, r, http.StatusConflict, message)
@@ -73,4 +74,9 @@ func ConflictResponse(w http.ResponseWriter, r *http.Request) {
 func RateLimitExceededResponse(w http.ResponseWriter, r *http.Request) {
 	message := "You've made too many requests. Please slow down and try again later."
 	ErrorResponse(w, r, http.StatusTooManyRequests, message)
+}
+
+func InvalidCredentialsResponse(w http.ResponseWriter, r *http.Request) {
+	message := "Invalid credentials. Verify your login information."
+	ErrorResponse(w, r, http.StatusUnauthorized, message)
 }

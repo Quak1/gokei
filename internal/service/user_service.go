@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/database/store"
@@ -12,16 +13,19 @@ import (
 )
 
 var (
-	ErrDuplicateUsername = errors.New("duplicate username")
+	ErrDuplicateUsername  = errors.New("duplicate username")
+	ErrInvalidCredentials = errors.New("invalid authentication credentials")
 )
 
 type UserService struct {
-	queries *store.Queries
+	queries      *store.Queries
+	tokenService *TokenService
 }
 
-func NewUserService(queries *store.Queries) *UserService {
+func NewUserService(queries *store.Queries, tokenService *TokenService) *UserService {
 	return &UserService{
-		queries: queries,
+		queries:      queries,
+		tokenService: tokenService,
 	}
 }
 
@@ -31,7 +35,7 @@ type InputUser struct {
 	Password string `json:"password"`
 }
 
-func validatePasswordPlaintex(v *validator.Validator, password string) {
+func validatePasswordPlaintext(v *validator.Validator, password string) {
 	v.Check(validator.NonZero(password), "password", "Must be provided")
 	v.Check(validator.MinLength(password, 8), "password", "Must be at least 8 bytes long")
 	v.Check(validator.MaxLength(password, 72), "password", "Must not be more than 72 bytes long")
@@ -43,13 +47,16 @@ func validateName(v *validator.Validator, username string) {
 	v.Check(validator.MaxLength(username, 100), "name", "Must not be more than 100 bytes long")
 }
 
-func validateUser(v *validator.Validator, user *InputUser) {
-	v.Check(validator.NonZero(user.Username), "username", "Must be provided")
-	v.Check(validator.MinLength(user.Username, 2), "username", "Must be at least 2 bytes long")
-	v.Check(validator.MaxLength(user.Username, 20), "username", "Must not be more than 20 bytes long")
+func validateUsername(v *validator.Validator, username string) {
+	v.Check(validator.NonZero(username), "username", "Must be provided")
+	v.Check(validator.MinLength(username, 2), "username", "Must be at least 2 bytes long")
+	v.Check(validator.MaxLength(username, 20), "username", "Must not be more than 20 bytes long")
+}
 
+func validateUser(v *validator.Validator, user *InputUser) {
+	validateUsername(v, user.Username)
 	validateName(v, user.Name)
-	validatePasswordPlaintex(v, user.Password)
+	validatePasswordPlaintext(v, user.Password)
 }
 
 func hashPassword(plaintextPassword string) ([]byte, error) {
@@ -59,6 +66,20 @@ func hashPassword(plaintextPassword string) ([]byte, error) {
 	}
 
 	return hash, nil
+}
+
+func doesPasswordMatch(user *store.User, plaintextPassword string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(plaintextPassword))
+	if err != nil {
+		switch {
+		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
+			return false, nil
+		default:
+			return false, err
+		}
+	}
+
+	return true, nil
 }
 
 func (s *UserService) Create(params *InputUser) (*store.User, error) {
@@ -158,7 +179,7 @@ func (s *UserService) UpdateByID(id int32, updateParams *UpdateUserParams) (*sto
 		user.Name = *updateParams.Name
 	}
 	if updateParams.Password != nil {
-		validatePasswordPlaintex(v, *updateParams.Password)
+		validatePasswordPlaintext(v, *updateParams.Password)
 	}
 	if !v.Valid() {
 		return nil, v.GetErrors()
@@ -192,4 +213,38 @@ func (s *UserService) UpdateByID(id int32, updateParams *UpdateUserParams) (*sto
 	}
 
 	return &user, nil
+}
+
+func (s *UserService) CreateAuthToken(username, password string) (*Token, error) {
+	v := validator.New()
+	validateUsername(v, username)
+	validatePasswordPlaintext(v, password)
+	if !v.Valid() {
+		return nil, v.GetErrors()
+	}
+
+	user, err := s.queries.GetUserByUsername(context.Background(), username)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, database.ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	match, err := doesPasswordMatch(&user, password)
+	if err != nil {
+		return nil, err
+	}
+	if !match {
+		return nil, ErrInvalidCredentials
+	}
+
+	token, err := s.tokenService.New(int(user.ID), 24*time.Hour)
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }
