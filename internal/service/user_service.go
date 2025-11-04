@@ -31,18 +31,25 @@ type InputUser struct {
 	Password string `json:"password"`
 }
 
+func validatePasswordPlaintex(v *validator.Validator, password string) {
+	v.Check(validator.NonZero(password), "password", "Must be provided")
+	v.Check(validator.MinLength(password, 8), "password", "Must be at least 8 bytes long")
+	v.Check(validator.MaxLength(password, 72), "password", "Must not be more than 72 bytes long")
+}
+
+func validateName(v *validator.Validator, username string) {
+	v.Check(validator.NonZero(username), "name", "Must be provided")
+	v.Check(validator.MinLength(username, 2), "name", "Must be at least 2 bytes long")
+	v.Check(validator.MaxLength(username, 100), "name", "Must not be more than 100 bytes long")
+}
+
 func validateUser(v *validator.Validator, user *InputUser) {
 	v.Check(validator.NonZero(user.Username), "username", "Must be provided")
 	v.Check(validator.MinLength(user.Username, 2), "username", "Must be at least 2 bytes long")
 	v.Check(validator.MaxLength(user.Username, 20), "username", "Must not be more than 20 bytes long")
 
-	v.Check(validator.NonZero(user.Name), "name", "Must be provided")
-	v.Check(validator.MinLength(user.Name, 2), "name", "Must be at least 2 bytes long")
-	v.Check(validator.MaxLength(user.Name, 100), "name", "Must not be more than 100 bytes long")
-
-	v.Check(validator.NonZero(user.Password), "password", "Must be provided")
-	v.Check(validator.MinLength(user.Password, 8), "password", "Must be at least 8 bytes long")
-	v.Check(validator.MaxLength(user.Password, 72), "password", "Must not be more than 72 bytes long")
+	validateName(v, user.Name)
+	validatePasswordPlaintex(v, user.Password)
 }
 
 func hashPassword(plaintextPassword string) ([]byte, error) {
@@ -144,25 +151,16 @@ func (s *UserService) UpdateByID(id int32, updateParams *UpdateUserParams) (*sto
 		}
 	}
 
-	validationUser := InputUser{
-		Username: user.Username,
-	}
+	v := validator.New()
 
 	if updateParams.Name != nil {
-		validationUser.Name = *updateParams.Name
+		validateName(v, *updateParams.Name)
 		user.Name = *updateParams.Name
-	} else {
-		validationUser.Name = user.Name
 	}
-
 	if updateParams.Password != nil {
-		validationUser.Password = *updateParams.Password
-	} else {
-		validationUser.Password = "Pa$$w0rd"
+		validatePasswordPlaintex(v, *updateParams.Password)
 	}
-
-	v := validator.New()
-	if validateUser(v, &validationUser); !v.Valid() {
+	if !v.Valid() {
 		return nil, v.GetErrors()
 	}
 
