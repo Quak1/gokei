@@ -2,9 +2,13 @@ package main
 
 import (
 	"net/http"
+
+	"github.com/Quak1/gokei/internal/middleware"
+	"github.com/Quak1/gokei/internal/service"
 )
 
-func (app *application) routes() http.Handler {
+func (app *application) routes(s *service.Service) http.Handler {
+	mw := middleware.New(s)
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /v1/ping", app.handler.Hello.PingHandler)
@@ -13,7 +17,7 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("GET /v1/users/{userID}", app.handler.User.GetByID)
 	mux.HandleFunc("PUT /v1/users/{userID}", app.handler.User.UpdateByID)
 	mux.HandleFunc("POST /v1/users/login", app.handler.User.Login)
-	mux.Handle("DELETE /v1/users/{userID}", app.handler.User.Authenticate(http.HandlerFunc(app.handler.User.DeleteByID)))
+	mux.Handle("DELETE /v1/users/{userID}", mw.Authenticate(http.HandlerFunc(app.handler.User.DeleteByID)))
 
 	mux.HandleFunc("GET /v1/categories", app.handler.Category.GetAll)
 	mux.HandleFunc("POST /v1/categories", app.handler.Category.Create)

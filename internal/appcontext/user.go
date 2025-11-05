@@ -1,4 +1,4 @@
-package handler
+package appcontext
 
 import (
 	"context"
@@ -11,12 +11,12 @@ type contextKey string
 
 const userContextKey = contextKey("user")
 
-func setContextUser(r *http.Request, user *store.GetUserFromTokenRow) *http.Request {
+func SetContextUser(r *http.Request, user *store.GetUserFromTokenRow) *http.Request {
 	ctx := context.WithValue(r.Context(), userContextKey, user)
 	return r.WithContext(ctx)
 }
 
-func getContextUser(r *http.Request) *store.GetUserFromTokenRow {
+func GetContextUser(r *http.Request) *store.GetUserFromTokenRow {
 	user, ok := r.Context().Value(userContextKey).(*store.GetUserFromTokenRow)
 	if !ok {
 		panic("missing user in request context")
