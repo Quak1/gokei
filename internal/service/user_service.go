@@ -13,27 +13,8 @@ import (
 )
 
 var (
-	ErrDuplicateUsername  = errors.New("duplicate username")
-	ErrInvalidCredentials = errors.New("invalid authentication credentials")
+	ErrDuplicateUsername = errors.New("duplicate username")
 )
-
-type UserService struct {
-	queries      *store.Queries
-	tokenService *TokenService
-}
-
-func NewUserService(queries *store.Queries, tokenService *TokenService) *UserService {
-	return &UserService{
-		queries:      queries,
-		tokenService: tokenService,
-	}
-}
-
-type InputUser struct {
-	Username string `json:"username"`
-	Name     string `json:"name"`
-	Password string `json:"password"`
-}
 
 func validatePasswordPlaintext(v *validator.Validator, password string) {
 	v.Check(validator.NonZero(password), "password", "Must be provided")
@@ -80,6 +61,22 @@ func doesPasswordMatch(user *store.User, plaintextPassword string) (bool, error)
 	}
 
 	return true, nil
+}
+
+type UserService struct {
+	queries *store.Queries
+}
+
+func NewUserService(queries *store.Queries) *UserService {
+	return &UserService{
+		queries: queries,
+	}
+}
+
+type InputUser struct {
+	Username string `json:"username"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }
 
 func (s *UserService) Create(params *InputUser) (*store.User, error) {
@@ -213,40 +210,6 @@ func (s *UserService) UpdateByID(id int32, updateParams *UpdateUserParams) (*sto
 	}
 
 	return &user, nil
-}
-
-func (s *UserService) CreateAuthToken(username, password string) (*Token, error) {
-	v := validator.New()
-	validateUsername(v, username)
-	validatePasswordPlaintext(v, password)
-	if !v.Valid() {
-		return nil, v.GetErrors()
-	}
-
-	user, err := s.queries.GetUserByUsername(context.Background(), username)
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return nil, database.ErrRecordNotFound
-		default:
-			return nil, err
-		}
-	}
-
-	match, err := doesPasswordMatch(&user, password)
-	if err != nil {
-		return nil, err
-	}
-	if !match {
-		return nil, ErrInvalidCredentials
-	}
-
-	token, err := s.tokenService.New(int(user.ID), 24*time.Hour)
-	if err != nil {
-		return nil, err
-	}
-
-	return token, nil
 }
 
 func (s *UserService) GetForToken(token string) (*store.GetUserFromTokenRow, error) {

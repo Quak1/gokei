@@ -11,6 +11,7 @@ type Service struct {
 	Transaction *TransactionService
 	User        *UserService
 	Token       *TokenService
+	Auth        *AuthService
 }
 
 func New(db *database.DB) *Service {
@@ -21,7 +22,8 @@ func New(db *database.DB) *Service {
 		Category:    NewCategoryService(db.Queries),
 		Account:     NewAccountService(db.Queries, db.Connection),
 		Transaction: NewTransactionService(db.Queries, db.Connection),
-		User:        NewUserService(db.Queries, tokenService),
+		User:        NewUserService(db.Queries),
 		Token:       tokenService,
+		Auth:        NewAuthService(db.Queries, tokenService),
 	}
 }

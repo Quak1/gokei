@@ -146,34 +146,3 @@ func (h *UserHandler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 		response.ServerErrorResponse(w, r, err)
 	}
 }
-
-func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var input struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
-
-	if err := response.ReadJSON(w, r, &input); err != nil {
-		response.BadRequestResponse(w, r, err)
-		return
-	}
-
-	token, err := h.userService.CreateAuthToken(input.Username, input.Password)
-	if err != nil {
-		var validationErr *validator.ValidationError
-		switch {
-		case errors.As(err, &validationErr):
-			response.FailedValidationResponse(w, r, validationErr)
-		case errors.Is(err, database.ErrRecordNotFound), errors.Is(err, service.ErrInvalidCredentials):
-			response.InvalidCredentialsResponse(w, r)
-		default:
-			response.ServerErrorResponse(w, r, err)
-		}
-		return
-	}
-
-	err = response.OK(w, response.Envelope{"authentication_token": token})
-	if err != nil {
-		response.ServerErrorResponse(w, r, err)
-	}
-}

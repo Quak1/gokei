@@ -13,6 +13,7 @@ type Handler struct {
 	Account     *AccountHandler
 	Transaction *TransactionHandler
 	User        *UserHandler
+	Auth        *AuthHandler
 }
 
 func New(svc *service.Service, logger *slog.Logger) *Handler {
@@ -24,5 +25,6 @@ func New(svc *service.Service, logger *slog.Logger) *Handler {
 		Account:     NewAccountHandler(svc.Account),
 		Transaction: NewTransactionHandler(svc.Transaction),
 		User:        NewUserHandler(svc.User),
+		Auth:        NewAuthHandler(svc.Auth),
 	}
 }

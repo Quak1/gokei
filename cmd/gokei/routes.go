@@ -16,8 +16,9 @@ func (app *application) routes(s *service.Service) http.Handler {
 	mux.HandleFunc("POST /v1/users", app.handler.User.Create)
 	mux.HandleFunc("GET /v1/users/{userID}", app.handler.User.GetByID)
 	mux.HandleFunc("PUT /v1/users/{userID}", app.handler.User.UpdateByID)
-	mux.HandleFunc("POST /v1/users/login", app.handler.User.Login)
 	mux.Handle("DELETE /v1/users/{userID}", mw.Authenticate(http.HandlerFunc(app.handler.User.DeleteByID)))
+
+	mux.HandleFunc("POST /v1/auth/login", app.handler.Auth.Login)
 
 	mux.HandleFunc("GET /v1/categories", app.handler.Category.GetAll)
 	mux.HandleFunc("POST /v1/categories", app.handler.Category.Create)
