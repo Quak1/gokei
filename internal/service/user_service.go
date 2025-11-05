@@ -248,3 +248,20 @@ func (s *UserService) CreateAuthToken(username, password string) (*Token, error)
 
 	return token, nil
 }
+
+func (s *UserService) GetForToken(token string) (*store.GetUserFromTokenRow, error) {
+	user, err := s.queries.GetUserFromToken(context.Background(), store.GetUserFromTokenParams{
+		Hash:   HashToken(token),
+		Expiry: time.Now(),
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, database.ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &user, nil
+}

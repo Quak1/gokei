@@ -14,6 +14,14 @@ WHERE id = $1;
 SELECT * FROM users
 WHERE username = $1;
 
+-- name: GetUserFromToken :one
+SELECT users.id, users.username 
+FROM users
+INNER JOIN tokens
+ON users.id = tokens.user_id
+WHERE tokens.hash = $1
+AND tokens.expiry > $2;
+
 -- name: DeleteUserById :execresult
 DELETE FROM users
 WHERE id = $1;

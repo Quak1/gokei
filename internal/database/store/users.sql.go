@@ -8,6 +8,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -118,6 +119,32 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.Name,
 		&i.PasswordHash,
 	)
+	return i, err
+}
+
+const getUserFromToken = `-- name: GetUserFromToken :one
+SELECT users.id, users.username 
+FROM users
+INNER JOIN tokens
+ON users.id = tokens.user_id
+WHERE tokens.hash = $1
+AND tokens.expiry > $2
+`
+
+type GetUserFromTokenParams struct {
+	Hash   []byte    `json:"hash"`
+	Expiry time.Time `json:"expiry"`
+}
+
+type GetUserFromTokenRow struct {
+	ID       int32  `json:"id"`
+	Username string `json:"username"`
+}
+
+func (q *Queries) GetUserFromToken(ctx context.Context, arg GetUserFromTokenParams) (GetUserFromTokenRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserFromToken, arg.Hash, arg.Expiry)
+	var i GetUserFromTokenRow
+	err := row.Scan(&i.ID, &i.Username)
 	return i, err
 }
 

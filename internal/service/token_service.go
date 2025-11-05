@@ -9,6 +9,7 @@ import (
 
 	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/database/store"
+	"github.com/Quak1/gokei/pkg/validator"
 )
 
 type Token struct {
@@ -27,6 +28,16 @@ func NewTokenService(queries *store.Queries) *TokenService {
 	}
 }
 
+func ValidateTokenPlaintext(v *validator.Validator, tokenPlaintext string) {
+	v.Check(tokenPlaintext != "", "token", "must be provided")
+	v.Check(len(tokenPlaintext) == 26, "token", "must be 26 bytes long")
+}
+
+func HashToken(token string) []byte {
+	hash := sha256.Sum256([]byte(token))
+	return hash[:]
+}
+
 func (s *TokenService) New(userID int, ttl time.Duration) (*Token, error) {
 	token := &Token{
 		Expiry: time.Now().Add(ttl),
@@ -39,8 +50,7 @@ func (s *TokenService) New(userID int, ttl time.Duration) (*Token, error) {
 	}
 
 	token.Plaintext = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(bytes)
-	hash := sha256.Sum256([]byte(token.Plaintext))
-	token.Hash = hash[:]
+	token.Hash = HashToken(token.Plaintext)
 
 	_, err = s.queries.CreateToken(context.Background(), store.CreateTokenParams{
 		Hash:   token.Hash,
