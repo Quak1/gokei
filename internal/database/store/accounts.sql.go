@@ -40,20 +40,30 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 
 const deleteAccountById = `-- name: DeleteAccountById :execresult
 DELETE FROM accounts
-WHERE id = $1
+WHERE id = $1 AND user_id = $2
 `
 
-func (q *Queries) DeleteAccountById(ctx context.Context, id int32) (sql.Result, error) {
-	return q.db.ExecContext(ctx, deleteAccountById, id)
+type DeleteAccountByIdParams struct {
+	ID     int32 `json:"id"`
+	UserID int32 `json:"user_id"`
+}
+
+func (q *Queries) DeleteAccountById(ctx context.Context, arg DeleteAccountByIdParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteAccountById, arg.ID, arg.UserID)
 }
 
 const getAccountByID = `-- name: GetAccountByID :one
 SELECT id, created_at, updated_at, type, name, balance_cents, version, user_id FROM accounts
-WHERE id = $1
+WHERE id = $1 AND user_id = $2
 `
 
-func (q *Queries) GetAccountByID(ctx context.Context, id int32) (Account, error) {
-	row := q.db.QueryRowContext(ctx, getAccountByID, id)
+type GetAccountByIDParams struct {
+	ID     int32 `json:"id"`
+	UserID int32 `json:"user_id"`
+}
+
+func (q *Queries) GetAccountByID(ctx context.Context, arg GetAccountByIDParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccountByID, arg.ID, arg.UserID)
 	var i Account
 	err := row.Scan(
 		&i.ID,
@@ -72,17 +82,22 @@ const getAccountSumBalance = `-- name: GetAccountSumBalance :one
 SELECT accounts.name, SUM(transactions.amount_cents) AS balance
 FROM transactions
 RIGHT JOIN accounts ON transactions.account_id = accounts.id
-WHERE account_id = $1
+WHERE account_id = $1 AND user_id = $2
 GROUP BY accounts.id
 `
+
+type GetAccountSumBalanceParams struct {
+	AccountID int32 `json:"account_id"`
+	UserID    int32 `json:"user_id"`
+}
 
 type GetAccountSumBalanceRow struct {
 	Name    string `json:"name"`
 	Balance int64  `json:"balance"`
 }
 
-func (q *Queries) GetAccountSumBalance(ctx context.Context, accountID int32) (GetAccountSumBalanceRow, error) {
-	row := q.db.QueryRowContext(ctx, getAccountSumBalance, accountID)
+func (q *Queries) GetAccountSumBalance(ctx context.Context, arg GetAccountSumBalanceParams) (GetAccountSumBalanceRow, error) {
+	row := q.db.QueryRowContext(ctx, getAccountSumBalance, arg.AccountID, arg.UserID)
 	var i GetAccountSumBalanceRow
 	err := row.Scan(&i.Name, &i.Balance)
 	return i, err
@@ -163,14 +178,15 @@ func (q *Queries) GetUserAccounts(ctx context.Context, userID int32) ([]Account,
 
 const updateAccountById = `-- name: UpdateAccountById :execresult
 UPDATE accounts
-SET name = $1, type = $2, version = version + 1
-WHERE id = $3 AND version = $4
+SET name = $1, type = $2, version = version + 1, updated_at = NOW()
+WHERE id = $3 AND user_id = $4 AND version = $5
 `
 
 type UpdateAccountByIdParams struct {
 	Name    string      `json:"name"`
 	Type    AccountType `json:"type"`
 	ID      int32       `json:"id"`
+	UserID  int32       `json:"user_id"`
 	Version int32       `json:"-"`
 }
 
@@ -179,13 +195,14 @@ func (q *Queries) UpdateAccountById(ctx context.Context, arg UpdateAccountByIdPa
 		arg.Name,
 		arg.Type,
 		arg.ID,
+		arg.UserID,
 		arg.Version,
 	)
 }
 
 const updateBalance = `-- name: UpdateBalance :one
 UPDATE accounts
-SET balance_cents = balance_cents + $2
+SET balance_cents = balance_cents + $2, updated_at = NOW()
 WHERE id = $1
 RETURNING balance_cents
 `

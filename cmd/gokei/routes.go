@@ -28,11 +28,11 @@ func (app *application) routes(s *service.Service) http.Handler {
 
 	mux.Handle("GET /v1/accounts", mw.Authenticate(http.HandlerFunc(app.handler.Account.GetAll)))
 	mux.Handle("POST /v1/accounts", mw.Authenticate(http.HandlerFunc(app.handler.Account.Create)))
-	mux.HandleFunc("GET /v1/accounts/{accountID}", app.handler.Account.GetByID)
-	mux.HandleFunc("GET /v1/accounts/{accountID}/balance", app.handler.Account.GetSumBalance)
-	mux.HandleFunc("GET /v1/accounts/{accountID}/transactions", app.handler.Transaction.GetAccountTransactions)
-	mux.HandleFunc("PUT /v1/accounts/{accountID}", app.handler.Account.UpdateByID)
-	mux.HandleFunc("DELETE /v1/accounts/{accountID}", app.handler.Account.DeleteByID)
+	mux.Handle("GET /v1/accounts/{accountID}", mw.Authenticate(http.HandlerFunc(app.handler.Account.GetByID)))
+	mux.Handle("GET /v1/accounts/{accountID}/balance", mw.Authenticate(http.HandlerFunc(app.handler.Account.GetSumBalance)))
+	mux.Handle("GET /v1/accounts/{accountID}/transactions", mw.Authenticate(http.HandlerFunc(app.handler.Transaction.GetAccountTransactions)))
+	mux.Handle("PUT /v1/accounts/{accountID}", mw.Authenticate(http.HandlerFunc(app.handler.Account.UpdateByID)))
+	mux.Handle("DELETE /v1/accounts/{accountID}", mw.Authenticate(http.HandlerFunc(app.handler.Account.DeleteByID)))
 
 	mux.HandleFunc("GET /v1/transactions", app.handler.Transaction.GetAll)
 	mux.HandleFunc("POST /v1/transactions", app.handler.Transaction.Create)

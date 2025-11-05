@@ -87,12 +87,15 @@ func (s *AccountService) Create(accountParams *store.CreateAccountParams) (*stor
 	return &newAccount, nil
 }
 
-func (s *AccountService) GetByID(id int32) (*store.Account, error) {
-	if id < 1 {
+func (s *AccountService) GetByID(accountID, userID int32) (*store.Account, error) {
+	if accountID < 1 || userID < 1 {
 		return nil, database.ErrRecordNotFound
 	}
 
-	account, err := s.queries.GetAccountByID(context.Background(), id)
+	account, err := s.queries.GetAccountByID(context.Background(), store.GetAccountByIDParams{
+		ID:     accountID,
+		UserID: userID,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -105,12 +108,15 @@ func (s *AccountService) GetByID(id int32) (*store.Account, error) {
 	return &account, nil
 }
 
-func (s *AccountService) DeleteByID(id int32) error {
-	if id < 1 {
+func (s *AccountService) DeleteByID(accountID, userID int32) error {
+	if accountID < 1 || userID < 1 {
 		return database.ErrRecordNotFound
 	}
 
-	result, err := s.queries.DeleteAccountById(context.Background(), id)
+	result, err := s.queries.DeleteAccountById(context.Background(), store.DeleteAccountByIdParams{
+		ID:     accountID,
+		UserID: userID,
+	})
 	if err != nil {
 		return err
 	}
@@ -127,12 +133,15 @@ func (s *AccountService) DeleteByID(id int32) error {
 	return nil
 }
 
-func (s *AccountService) GetSumBalance(id int32) (int64, error) {
-	if id < 1 {
+func (s *AccountService) GetSumBalance(accountID int32, userID int32) (int64, error) {
+	if accountID < 1 || userID < 1 {
 		return 0, database.ErrRecordNotFound
 	}
 
-	balance, err := s.queries.GetAccountSumBalance(context.Background(), id)
+	balance, err := s.queries.GetAccountSumBalance(context.Background(), store.GetAccountSumBalanceParams{
+		AccountID: accountID,
+		UserID:    userID,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -150,14 +159,17 @@ type UpdateAccountParams struct {
 	Type *store.AccountType `json:"type"`
 }
 
-func (s *AccountService) UpdateByID(id int32, updateParams *UpdateAccountParams) (*store.Account, error) {
-	if id < 1 {
+func (s *AccountService) UpdateByID(accountID, userID int32, updateParams *UpdateAccountParams) (*store.Account, error) {
+	if accountID < 1 || userID < 1 {
 		return nil, database.ErrRecordNotFound
 	}
 
 	ctx := context.Background()
 
-	account, err := s.queries.GetAccountByID(ctx, id)
+	account, err := s.queries.GetAccountByID(ctx, store.GetAccountByIDParams{
+		ID:     accountID,
+		UserID: userID,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -184,6 +196,7 @@ func (s *AccountService) UpdateByID(id int32, updateParams *UpdateAccountParams)
 		Type:    account.Type,
 		ID:      account.ID,
 		Version: account.Version,
+		UserID:  account.UserID,
 	})
 	if err != nil {
 		return nil, err

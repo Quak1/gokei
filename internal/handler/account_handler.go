@@ -87,7 +87,9 @@ func (h *AccountHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := h.accountService.GetByID(int32(id))
+	ctxUser := appcontext.GetContextUser(r)
+
+	account, err := h.accountService.GetByID(int32(id), ctxUser.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, database.ErrRecordNotFound):
@@ -111,7 +113,9 @@ func (h *AccountHandler) DeleteByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.accountService.DeleteByID(int32(id))
+	ctxUser := appcontext.GetContextUser(r)
+
+	err = h.accountService.DeleteByID(int32(id), ctxUser.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, database.ErrRecordNotFound):
@@ -135,7 +139,9 @@ func (h *AccountHandler) GetSumBalance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	balance, err := h.accountService.GetSumBalance(int32(id))
+	ctxUser := appcontext.GetContextUser(r)
+
+	balance, err := h.accountService.GetSumBalance(int32(id), ctxUser.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, database.ErrRecordNotFound):
@@ -166,7 +172,9 @@ func (h *AccountHandler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := h.accountService.UpdateByID(int32(id), &input)
+	ctxUser := appcontext.GetContextUser(r)
+
+	account, err := h.accountService.UpdateByID(int32(id), ctxUser.ID, &input)
 	if err != nil {
 		var validationErr *validator.ValidationError
 		switch {
