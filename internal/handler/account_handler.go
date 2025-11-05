@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Quak1/gokei/internal/appcontext"
 	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/database/store"
 	"github.com/Quak1/gokei/internal/service"
@@ -23,7 +24,10 @@ func NewAccountHandler(svc *service.AccountService) *AccountHandler {
 }
 
 func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var input store.CreateAccountParams
+	var input struct {
+		Type store.AccountType `json:"type"`
+		Name string            `json:"name"`
+	}
 
 	err := response.ReadJSON(w, r, &input)
 	if err != nil {
@@ -31,7 +35,15 @@ func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := h.accountService.Create(&input)
+	ctxUser := appcontext.GetContextUser(r)
+
+	params := store.CreateAccountParams{
+		Type:   input.Type,
+		Name:   input.Name,
+		UserID: ctxUser.ID,
+	}
+
+	account, err := h.accountService.Create(&params)
 	if err != nil {
 		var validationErr *validator.ValidationError
 
@@ -55,8 +67,8 @@ func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AccountHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	// TODO get from single user
-	accounts, err := h.accountService.GetAll()
+	ctxUser := appcontext.GetContextUser(r)
+	accounts, err := h.accountService.GetAll(ctxUser.ID)
 
 	if err != nil {
 		response.ServerErrorResponse(w, r, err)

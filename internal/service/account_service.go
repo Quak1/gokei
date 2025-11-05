@@ -30,8 +30,8 @@ func validateAccount(v *validator.Validator, account *store.Account) {
 	v.Check(validator.PermittedValue(account.Type, "debit", "cash", "credit"), "type", "Invalid account type. Valid types are credit, debit, and cash")
 }
 
-func (s *AccountService) GetAll() ([]*store.Account, error) {
-	data, err := s.queries.GetAllAccounts(context.Background())
+func (s *AccountService) GetAll(userID int32) ([]*store.Account, error) {
+	data, err := s.queries.GetUserAccounts(context.Background(), userID)
 	if err != nil {
 		return nil, err
 	}

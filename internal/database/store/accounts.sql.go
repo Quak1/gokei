@@ -11,18 +11,19 @@ import (
 )
 
 const createAccount = `-- name: CreateAccount :one
-INSERT INTO accounts (type, name) 
-VALUES ($1, $2)
-RETURNING id, created_at, updated_at, type, name, balance_cents, version
+INSERT INTO accounts (type, name, user_id) 
+VALUES ($1, $2, $3)
+RETURNING id, created_at, updated_at, type, name, balance_cents, version, user_id
 `
 
 type CreateAccountParams struct {
-	Type AccountType `json:"type"`
-	Name string      `json:"name"`
+	Type   AccountType `json:"type"`
+	Name   string      `json:"name"`
+	UserID int32       `json:"user_id"`
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, createAccount, arg.Type, arg.Name)
+	row := q.db.QueryRowContext(ctx, createAccount, arg.Type, arg.Name, arg.UserID)
 	var i Account
 	err := row.Scan(
 		&i.ID,
@@ -32,6 +33,7 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		&i.Name,
 		&i.BalanceCents,
 		&i.Version,
+		&i.UserID,
 	)
 	return i, err
 }
@@ -46,7 +48,7 @@ func (q *Queries) DeleteAccountById(ctx context.Context, id int32) (sql.Result, 
 }
 
 const getAccountByID = `-- name: GetAccountByID :one
-SELECT id, created_at, updated_at, type, name, balance_cents, version FROM accounts
+SELECT id, created_at, updated_at, type, name, balance_cents, version, user_id FROM accounts
 WHERE id = $1
 `
 
@@ -61,6 +63,7 @@ func (q *Queries) GetAccountByID(ctx context.Context, id int32) (Account, error)
 		&i.Name,
 		&i.BalanceCents,
 		&i.Version,
+		&i.UserID,
 	)
 	return i, err
 }
@@ -86,7 +89,7 @@ func (q *Queries) GetAccountSumBalance(ctx context.Context, accountID int32) (Ge
 }
 
 const getAllAccounts = `-- name: GetAllAccounts :many
-SELECT id, created_at, updated_at, type, name, balance_cents, version FROM accounts
+SELECT id, created_at, updated_at, type, name, balance_cents, version, user_id FROM accounts
 `
 
 func (q *Queries) GetAllAccounts(ctx context.Context) ([]Account, error) {
@@ -106,6 +109,44 @@ func (q *Queries) GetAllAccounts(ctx context.Context) ([]Account, error) {
 			&i.Name,
 			&i.BalanceCents,
 			&i.Version,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserAccounts = `-- name: GetUserAccounts :many
+SELECT id, created_at, updated_at, type, name, balance_cents, version, user_id FROM accounts
+WHERE user_id = $1
+`
+
+func (q *Queries) GetUserAccounts(ctx context.Context, userID int32) ([]Account, error) {
+	rows, err := q.db.QueryContext(ctx, getUserAccounts, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Account
+	for rows.Next() {
+		var i Account
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Type,
+			&i.Name,
+			&i.BalanceCents,
+			&i.Version,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}

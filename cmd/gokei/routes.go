@@ -26,8 +26,8 @@ func (app *application) routes(s *service.Service) http.Handler {
 	mux.HandleFunc("PUT /v1/categories/{categoryID}", app.handler.Category.UpdateByID)
 	mux.HandleFunc("DELETE /v1/categories/{categoryID}", app.handler.Category.DeleteByID)
 
-	mux.HandleFunc("GET /v1/accounts", app.handler.Account.GetAll)
-	mux.HandleFunc("POST /v1/accounts", app.handler.Account.Create)
+	mux.Handle("GET /v1/accounts", mw.Authenticate(http.HandlerFunc(app.handler.Account.GetAll)))
+	mux.Handle("POST /v1/accounts", mw.Authenticate(http.HandlerFunc(app.handler.Account.Create)))
 	mux.HandleFunc("GET /v1/accounts/{accountID}", app.handler.Account.GetByID)
 	mux.HandleFunc("GET /v1/accounts/{accountID}/balance", app.handler.Account.GetSumBalance)
 	mux.HandleFunc("GET /v1/accounts/{accountID}/transactions", app.handler.Transaction.GetAccountTransactions)

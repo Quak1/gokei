@@ -1,10 +1,14 @@
 -- name: CreateAccount :one
-INSERT INTO accounts (type, name) 
-VALUES ($1, $2)
+INSERT INTO accounts (type, name, user_id) 
+VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: GetAllAccounts :many
 SELECT * FROM accounts;
+
+-- name: GetUserAccounts :many
+SELECT * FROM accounts
+WHERE user_id = $1;
 
 -- name: UpdateBalance :one
 UPDATE accounts
