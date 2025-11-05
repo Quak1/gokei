@@ -12,6 +12,11 @@ import (
 	"github.com/Quak1/gokei/pkg/validator"
 )
 
+func isSameUserID(r *http.Request, userID int) bool {
+	ctxUser := appcontext.GetContextUser(r)
+	return ctxUser.ID == int32(userID)
+}
+
 type UserHandler struct {
 	userService *service.UserService
 }
@@ -63,6 +68,11 @@ func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !isSameUserID(r, id) {
+		response.UnauthorizedResponse(w, r)
+		return
+	}
+
 	user, err := h.userService.GetByID(int32(id))
 	if err != nil {
 		switch {
@@ -87,10 +97,8 @@ func (h *UserHandler) DeleteByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctxUser := appcontext.GetContextUser(r)
-
-	if int(ctxUser.ID) != id {
-		response.ForbiddenResponse(w, r)
+	if !isSameUserID(r, id) {
+		response.UnauthorizedResponse(w, r)
 		return
 	}
 
@@ -115,6 +123,11 @@ func (h *UserHandler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 	id, err := readIntParam(r, "userID")
 	if err != nil {
 		response.BadRequestResponseGeneric(w, r)
+		return
+	}
+
+	if !isSameUserID(r, id) {
+		response.UnauthorizedResponse(w, r)
 		return
 	}
 
