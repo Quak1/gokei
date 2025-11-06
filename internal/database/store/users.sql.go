@@ -150,7 +150,7 @@ func (q *Queries) GetUserFromToken(ctx context.Context, arg GetUserFromTokenPara
 
 const updateUserById = `-- name: UpdateUserById :execresult
 UPDATE users
-SET name = $1, password_hash = $2, version = version + 1
+SET name = $1, password_hash = $2, version = version + 1, updated_at = NOW()
 WHERE id = $3 AND version = $4
 `
 
