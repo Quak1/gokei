@@ -52,7 +52,7 @@ func (s *TransactionService) GetAll(userID int32) ([]*store.Transaction, error) 
 	return transactions, nil
 }
 
-func (s *TransactionService) Create(transactionParams *store.CreateTransactionParams) (*store.Transaction, error) {
+func (s *TransactionService) Create(userID int32, transactionParams *store.CreateTransactionParams) (*store.Transaction, error) {
 	transaction := &store.Transaction{
 		AccountID:   transactionParams.AccountID,
 		AmountCents: transactionParams.AmountCents,
@@ -76,6 +76,19 @@ func (s *TransactionService) Create(transactionParams *store.CreateTransactionPa
 	qtx := s.queries.WithTx(tx)
 	ctx := context.Background()
 
+	_, err = qtx.GetAccountByID(ctx, store.GetAccountByIDParams{
+		ID:     transactionParams.AccountID,
+		UserID: userID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, database.ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
 	newTransaction, err := qtx.CreateTransaction(ctx, *transactionParams)
 	if err != nil {
 		return nil, database.HandleForeignKeyError(err)
@@ -84,6 +97,7 @@ func (s *TransactionService) Create(transactionParams *store.CreateTransactionPa
 	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
 		ID:           transaction.AccountID,
 		BalanceCents: transaction.AmountCents,
+		UserID:       userID,
 	})
 	if err != nil {
 		return nil, err
@@ -94,7 +108,6 @@ func (s *TransactionService) Create(transactionParams *store.CreateTransactionPa
 		return nil, err
 	}
 
-	// TODO return category name?
 	return &newTransaction, nil
 }
 
@@ -252,6 +265,19 @@ func (s *TransactionService) UpdateByID(transactionID, userID int32, updateParam
 	v := validator.New()
 	if validateTransaction(v, &transaction); !v.Valid() {
 		return nil, v.GetErrors()
+	}
+
+	_, err = qtx.GetAccountByID(ctx, store.GetAccountByIDParams{
+		ID:     transaction.AccountID,
+		UserID: userID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, database.ErrRecordNotFound
+		default:
+			return nil, err
+		}
 	}
 
 	result, err := s.queries.UpdateTransactionById(ctx, store.UpdateTransactionByIdParams{

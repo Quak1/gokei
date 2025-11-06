@@ -35,7 +35,7 @@ func (app *application) routes(s *service.Service) http.Handler {
 	mux.Handle("DELETE /v1/accounts/{accountID}", mw.Authenticate(http.HandlerFunc(app.handler.Account.DeleteByID)))
 
 	mux.Handle("GET /v1/transactions", mw.Authenticate(http.HandlerFunc(app.handler.Transaction.GetAll)))
-	mux.HandleFunc("POST /v1/transactions", app.handler.Transaction.Create)
+	mux.Handle("POST /v1/transactions", mw.Authenticate(http.HandlerFunc(app.handler.Transaction.Create)))
 	mux.Handle("GET /v1/transactions/{transactionID}", mw.Authenticate(http.HandlerFunc(app.handler.Transaction.GetByID)))
 	mux.Handle("PUT /v1/transactions/{transactionID}", mw.Authenticate(http.HandlerFunc(app.handler.Transaction.UpdateByID)))
 	mux.Handle("DELETE /v1/transactions/{transactionID}", mw.Authenticate(http.HandlerFunc(app.handler.Transaction.DeleteByID)))

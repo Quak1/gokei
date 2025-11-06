@@ -32,15 +32,19 @@ func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transaction, err := h.transactionService.Create(&input)
+	ctxUser := appcontext.GetContextUser(r)
+
+	transaction, err := h.transactionService.Create(ctxUser.ID, &input)
 	if err != nil {
 		var validationErr *validator.ValidationError
 
 		switch {
 		case errors.As(err, &validationErr):
 			response.FailedValidationResponse(w, r, validationErr)
-		case errors.Is(err, database.ErrInvalidAccount), errors.Is(err, database.ErrInvalidCategory):
+		case errors.Is(err, database.ErrInvalidCategory):
 			response.BadRequestResponse(w, r, err)
+		case errors.Is(err, database.ErrInvalidAccount), errors.Is(err, database.ErrRecordNotFound):
+			response.NotFoundResponse(w, r)
 		default:
 			response.ServerErrorResponse(w, r, err)
 		}
