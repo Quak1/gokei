@@ -12,8 +12,8 @@ WHERE user_id = $1;
 
 -- name: UpdateBalance :one
 UPDATE accounts
-SET balance_cents = balance_cents + $2, updated_at = NOW()
-WHERE id = $1
+SET balance_cents = balance_cents + $1, updated_at = NOW()
+WHERE id = $2 AND user_id = $3
 RETURNING balance_cents;
 
 -- name: GetAccountByID :one

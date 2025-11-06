@@ -54,54 +54,72 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 
 const deleteTransactionByID = `-- name: DeleteTransactionByID :one
 DELETE FROM transactions
-WHERE id = $1
-RETURNING id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note, version
+USING accounts
+WHERE transactions.account_id = accounts.id
+  AND transactions.id = $1
+  AND accounts.user_id = $2
+RETURNING transactions.id, transactions.created_at, transactions.updated_at, transactions.amount_cents, transactions.account_id, transactions.category_id, transactions.title, transactions.date, transactions.attachment, transactions.note, transactions.version
 `
 
-func (q *Queries) DeleteTransactionByID(ctx context.Context, id int32) (Transaction, error) {
-	row := q.db.QueryRowContext(ctx, deleteTransactionByID, id)
-	var i Transaction
+type DeleteTransactionByIDParams struct {
+	ID     int32 `json:"id"`
+	UserID int32 `json:"user_id"`
+}
+
+type DeleteTransactionByIDRow struct {
+	Transaction Transaction `json:"transaction"`
+}
+
+func (q *Queries) DeleteTransactionByID(ctx context.Context, arg DeleteTransactionByIDParams) (DeleteTransactionByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, deleteTransactionByID, arg.ID, arg.UserID)
+	var i DeleteTransactionByIDRow
 	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.AmountCents,
-		&i.AccountID,
-		&i.CategoryID,
-		&i.Title,
-		&i.Date,
-		&i.Attachment,
-		&i.Note,
-		&i.Version,
+		&i.Transaction.ID,
+		&i.Transaction.CreatedAt,
+		&i.Transaction.UpdatedAt,
+		&i.Transaction.AmountCents,
+		&i.Transaction.AccountID,
+		&i.Transaction.CategoryID,
+		&i.Transaction.Title,
+		&i.Transaction.Date,
+		&i.Transaction.Attachment,
+		&i.Transaction.Note,
+		&i.Transaction.Version,
 	)
 	return i, err
 }
 
 const getAllTransactions = `-- name: GetAllTransactions :many
-SELECT id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note, version FROM transactions
+SELECT transactions.id, transactions.created_at, transactions.updated_at, transactions.amount_cents, transactions.account_id, transactions.category_id, transactions.title, transactions.date, transactions.attachment, transactions.note, transactions.version FROM transactions
+INNER JOIN accounts ON transactions.account_id = accounts.id
+WHERE accounts.user_id = $1
 `
 
-func (q *Queries) GetAllTransactions(ctx context.Context) ([]Transaction, error) {
-	rows, err := q.db.QueryContext(ctx, getAllTransactions)
+type GetAllTransactionsRow struct {
+	Transaction Transaction `json:"transaction"`
+}
+
+func (q *Queries) GetAllTransactions(ctx context.Context, userID int32) ([]GetAllTransactionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllTransactions, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Transaction
+	var items []GetAllTransactionsRow
 	for rows.Next() {
-		var i Transaction
+		var i GetAllTransactionsRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.AmountCents,
-			&i.AccountID,
-			&i.CategoryID,
-			&i.Title,
-			&i.Date,
-			&i.Attachment,
-			&i.Note,
-			&i.Version,
+			&i.Transaction.ID,
+			&i.Transaction.CreatedAt,
+			&i.Transaction.UpdatedAt,
+			&i.Transaction.AmountCents,
+			&i.Transaction.AccountID,
+			&i.Transaction.CategoryID,
+			&i.Transaction.Title,
+			&i.Transaction.Date,
+			&i.Transaction.Attachment,
+			&i.Transaction.Note,
+			&i.Transaction.Version,
 		); err != nil {
 			return nil, err
 		}
@@ -117,55 +135,75 @@ func (q *Queries) GetAllTransactions(ctx context.Context) ([]Transaction, error)
 }
 
 const getTransactionByID = `-- name: GetTransactionByID :one
-SELECT id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note, version FROM transactions
-WHERE id = $1
+SELECT transactions.id, transactions.created_at, transactions.updated_at, transactions.amount_cents, transactions.account_id, transactions.category_id, transactions.title, transactions.date, transactions.attachment, transactions.note, transactions.version FROM transactions
+INNER JOIN accounts ON transactions.account_id = accounts.id
+WHERE transactions.id = $1 AND accounts.user_id = $2
 `
 
-func (q *Queries) GetTransactionByID(ctx context.Context, id int32) (Transaction, error) {
-	row := q.db.QueryRowContext(ctx, getTransactionByID, id)
-	var i Transaction
+type GetTransactionByIDParams struct {
+	ID     int32 `json:"id"`
+	UserID int32 `json:"user_id"`
+}
+
+type GetTransactionByIDRow struct {
+	Transaction Transaction `json:"transaction"`
+}
+
+func (q *Queries) GetTransactionByID(ctx context.Context, arg GetTransactionByIDParams) (GetTransactionByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getTransactionByID, arg.ID, arg.UserID)
+	var i GetTransactionByIDRow
 	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.AmountCents,
-		&i.AccountID,
-		&i.CategoryID,
-		&i.Title,
-		&i.Date,
-		&i.Attachment,
-		&i.Note,
-		&i.Version,
+		&i.Transaction.ID,
+		&i.Transaction.CreatedAt,
+		&i.Transaction.UpdatedAt,
+		&i.Transaction.AmountCents,
+		&i.Transaction.AccountID,
+		&i.Transaction.CategoryID,
+		&i.Transaction.Title,
+		&i.Transaction.Date,
+		&i.Transaction.Attachment,
+		&i.Transaction.Note,
+		&i.Transaction.Version,
 	)
 	return i, err
 }
 
 const getTransactionsByAccountID = `-- name: GetTransactionsByAccountID :many
-SELECT id, created_at, updated_at, amount_cents, account_id, category_id, title, date, attachment, note, version FROM transactions
-WHERE account_id = $1
+SELECT transactions.id, transactions.created_at, transactions.updated_at, transactions.amount_cents, transactions.account_id, transactions.category_id, transactions.title, transactions.date, transactions.attachment, transactions.note, transactions.version FROM transactions
+INNER JOIN accounts ON transactions.account_id = accounts.id
+WHERE transactions.account_id = $1 AND accounts.user_id = $2
 `
 
-func (q *Queries) GetTransactionsByAccountID(ctx context.Context, accountID int32) ([]Transaction, error) {
-	rows, err := q.db.QueryContext(ctx, getTransactionsByAccountID, accountID)
+type GetTransactionsByAccountIDParams struct {
+	AccountID int32 `json:"account_id"`
+	UserID    int32 `json:"user_id"`
+}
+
+type GetTransactionsByAccountIDRow struct {
+	Transaction Transaction `json:"transaction"`
+}
+
+func (q *Queries) GetTransactionsByAccountID(ctx context.Context, arg GetTransactionsByAccountIDParams) ([]GetTransactionsByAccountIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTransactionsByAccountID, arg.AccountID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Transaction
+	var items []GetTransactionsByAccountIDRow
 	for rows.Next() {
-		var i Transaction
+		var i GetTransactionsByAccountIDRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.AmountCents,
-			&i.AccountID,
-			&i.CategoryID,
-			&i.Title,
-			&i.Date,
-			&i.Attachment,
-			&i.Note,
-			&i.Version,
+			&i.Transaction.ID,
+			&i.Transaction.CreatedAt,
+			&i.Transaction.UpdatedAt,
+			&i.Transaction.AmountCents,
+			&i.Transaction.AccountID,
+			&i.Transaction.CategoryID,
+			&i.Transaction.Title,
+			&i.Transaction.Date,
+			&i.Transaction.Attachment,
+			&i.Transaction.Note,
+			&i.Transaction.Version,
 		); err != nil {
 			return nil, err
 		}
@@ -182,13 +220,23 @@ func (q *Queries) GetTransactionsByAccountID(ctx context.Context, accountID int3
 
 const updateTransactionById = `-- name: UpdateTransactionById :execresult
 UPDATE transactions
-SET amount_cents = $3, account_id = $4, category_id = $5, title = $6, date = $7, attachment = $8, note = $9, version = version + 1
-WHERE id = $1 AND version = $2
+SET amount_cents = $1,
+    account_id = $2,
+    category_id = $3,
+    title = $4,
+    date = $5,
+    attachment = $6,
+    note = $7,
+    version = transactions.version + 1,
+    updated_at = NOW()
+FROM accounts
+WHERE transactions.account_id = accounts.id
+  AND transactions.id = $8
+  AND accounts.user_id = $9
+  AND transactions.version = $10
 `
 
 type UpdateTransactionByIdParams struct {
-	ID          int32     `json:"id"`
-	Version     int32     `json:"-"`
 	AmountCents int64     `json:"amount_cents"`
 	AccountID   int32     `json:"account_id"`
 	CategoryID  int32     `json:"category_id"`
@@ -196,12 +244,13 @@ type UpdateTransactionByIdParams struct {
 	Date        time.Time `json:"date"`
 	Attachment  string    `json:"attachment"`
 	Note        string    `json:"note"`
+	ID          int32     `json:"id"`
+	UserID      int32     `json:"user_id"`
+	Version     int32     `json:"-"`
 }
 
 func (q *Queries) UpdateTransactionById(ctx context.Context, arg UpdateTransactionByIdParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, updateTransactionById,
-		arg.ID,
-		arg.Version,
 		arg.AmountCents,
 		arg.AccountID,
 		arg.CategoryID,
@@ -209,5 +258,8 @@ func (q *Queries) UpdateTransactionById(ctx context.Context, arg UpdateTransacti
 		arg.Date,
 		arg.Attachment,
 		arg.Note,
+		arg.ID,
+		arg.UserID,
+		arg.Version,
 	)
 }

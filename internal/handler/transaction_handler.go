@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Quak1/gokei/internal/appcontext"
 	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/database/store"
 	"github.com/Quak1/gokei/internal/service"
@@ -27,7 +28,6 @@ func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	err := response.ReadJSON(w, r, &input)
 	if err != nil {
-		fmt.Println(err)
 		response.BadRequestResponse(w, r, err)
 		return
 	}
@@ -58,7 +58,9 @@ func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TransactionHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	transactions, err := h.transactionService.GetAll()
+	ctxUser := appcontext.GetContextUser(r)
+
+	transactions, err := h.transactionService.GetAll(ctxUser.ID)
 	if err != nil {
 		response.ServerErrorResponse(w, r, err)
 		return
@@ -78,7 +80,9 @@ func (h *TransactionHandler) GetAccountTransactions(w http.ResponseWriter, r *ht
 		return
 	}
 
-	transactions, err := h.transactionService.GetAllTRansactionsForAccountID(accountID)
+	ctxUser := appcontext.GetContextUser(r)
+
+	transactions, err := h.transactionService.GetAllTRansactionsForAccountID(int32(accountID), ctxUser.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, database.ErrRecordNotFound):
@@ -103,7 +107,9 @@ func (h *TransactionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transaction, err := h.transactionService.GetByID(int32(id))
+	ctxUser := appcontext.GetContextUser(r)
+
+	transaction, err := h.transactionService.GetByID(int32(id), ctxUser.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, database.ErrRecordNotFound):
@@ -127,7 +133,9 @@ func (h *TransactionHandler) DeleteByID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = h.transactionService.DeleteByID(int32(id))
+	ctxUser := appcontext.GetContextUser(r)
+
+	err = h.transactionService.DeleteByID(int32(id), ctxUser.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, database.ErrRecordNotFound):
@@ -158,7 +166,9 @@ func (h *TransactionHandler) UpdateByID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	transaction, err := h.transactionService.UpdateByID(int32(id), &input)
+	ctxUser := appcontext.GetContextUser(r)
+
+	transaction, err := h.transactionService.UpdateByID(int32(id), ctxUser.ID, &input)
 	if err != nil {
 		var validationErr *validator.ValidationError
 		switch {

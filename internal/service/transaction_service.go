@@ -38,15 +38,15 @@ func validateTransaction(v *validator.Validator, transaction *store.Transaction)
 	// v.Check(validator.NonZero(transaction.Note), "note", "Must be provided")
 }
 
-func (s *TransactionService) GetAll() ([]*store.Transaction, error) {
-	data, err := s.queries.GetAllTransactions(context.Background())
+func (s *TransactionService) GetAll(userID int32) ([]*store.Transaction, error) {
+	data, err := s.queries.GetAllTransactions(context.Background(), userID)
 	if err != nil {
 		return nil, err
 	}
 
 	transactions := make([]*store.Transaction, len(data))
 	for i, v := range data {
-		transactions[i] = &v
+		transactions[i] = &v.Transaction
 	}
 
 	return transactions, nil
@@ -98,8 +98,11 @@ func (s *TransactionService) Create(transactionParams *store.CreateTransactionPa
 	return &newTransaction, nil
 }
 
-func (s *TransactionService) GetAllTRansactionsForAccountID(accountID int) ([]*store.Transaction, error) {
-	data, err := s.queries.GetTransactionsByAccountID(context.Background(), int32(accountID))
+func (s *TransactionService) GetAllTRansactionsForAccountID(accountID, userID int32) ([]*store.Transaction, error) {
+	data, err := s.queries.GetTransactionsByAccountID(context.Background(), store.GetTransactionsByAccountIDParams{
+		AccountID: accountID,
+		UserID:    userID,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -110,18 +113,21 @@ func (s *TransactionService) GetAllTRansactionsForAccountID(accountID int) ([]*s
 
 	transactions := make([]*store.Transaction, len(data))
 	for i, v := range data {
-		transactions[i] = &v
+		transactions[i] = &v.Transaction
 	}
 
 	return transactions, nil
 }
 
-func (s *TransactionService) GetByID(id int32) (*store.Transaction, error) {
-	if id < 1 {
+func (s *TransactionService) GetByID(transactionID, userID int32) (*store.Transaction, error) {
+	if transactionID < 1 || userID < 1 {
 		return nil, database.ErrRecordNotFound
 	}
 
-	transaction, err := s.queries.GetTransactionByID(context.Background(), id)
+	transaction, err := s.queries.GetTransactionByID(context.Background(), store.GetTransactionByIDParams{
+		ID:     transactionID,
+		UserID: userID,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -131,11 +137,11 @@ func (s *TransactionService) GetByID(id int32) (*store.Transaction, error) {
 		}
 	}
 
-	return &transaction, nil
+	return &transaction.Transaction, nil
 }
 
-func (s *TransactionService) DeleteByID(id int32) error {
-	if id < 1 {
+func (s *TransactionService) DeleteByID(transactionID, userID int32) error {
+	if transactionID < 1 || userID < 1 {
 		return database.ErrRecordNotFound
 	}
 
@@ -148,7 +154,10 @@ func (s *TransactionService) DeleteByID(id int32) error {
 	qtx := s.queries.WithTx(tx)
 	ctx := context.Background()
 
-	transaction, err := qtx.DeleteTransactionByID(ctx, id)
+	t, err := qtx.DeleteTransactionByID(ctx, store.DeleteTransactionByIDParams{
+		ID:     transactionID,
+		UserID: userID,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -158,9 +167,11 @@ func (s *TransactionService) DeleteByID(id int32) error {
 		}
 	}
 
+	transaction := t.Transaction
 	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
 		ID:           transaction.AccountID,
 		BalanceCents: -transaction.AmountCents,
+		UserID:       userID,
 	})
 	if err != nil {
 		return err
@@ -184,8 +195,8 @@ type UpdateTransactionParams struct {
 	Note        *string    `json:"note"`
 }
 
-func (s *TransactionService) UpdateByID(id int32, updateParams *UpdateTransactionParams) (*store.Transaction, error) {
-	if id < 1 {
+func (s *TransactionService) UpdateByID(transactionID, userID int32, updateParams *UpdateTransactionParams) (*store.Transaction, error) {
+	if transactionID < 1 || userID < 1 {
 		return nil, database.ErrRecordNotFound
 	}
 
@@ -198,7 +209,10 @@ func (s *TransactionService) UpdateByID(id int32, updateParams *UpdateTransactio
 	qtx := s.queries.WithTx(tx)
 	ctx := context.Background()
 
-	transaction, err := qtx.GetTransactionByID(ctx, id)
+	t, err := qtx.GetTransactionByID(ctx, store.GetTransactionByIDParams{
+		ID:     transactionID,
+		UserID: userID,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -207,6 +221,8 @@ func (s *TransactionService) UpdateByID(id int32, updateParams *UpdateTransactio
 			return nil, err
 		}
 	}
+
+	transaction := t.Transaction
 
 	oldAmount := transaction.AmountCents
 	oldAccountID := transaction.AccountID
@@ -248,6 +264,7 @@ func (s *TransactionService) UpdateByID(id int32, updateParams *UpdateTransactio
 		Date:        transaction.Date,
 		Attachment:  transaction.Attachment,
 		Note:        transaction.Note,
+		UserID:      userID,
 	})
 	if err != nil {
 		return nil, database.HandleForeignKeyError(err)
@@ -265,6 +282,7 @@ func (s *TransactionService) UpdateByID(id int32, updateParams *UpdateTransactio
 	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
 		ID:           oldAccountID,
 		BalanceCents: -oldAmount,
+		UserID:       userID,
 	})
 	if err != nil {
 		return nil, err
@@ -273,6 +291,7 @@ func (s *TransactionService) UpdateByID(id int32, updateParams *UpdateTransactio
 	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
 		ID:           transaction.AccountID,
 		BalanceCents: transaction.AmountCents,
+		UserID:       userID,
 	})
 	if err != nil {
 		return nil, err
