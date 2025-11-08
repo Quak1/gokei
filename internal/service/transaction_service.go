@@ -13,6 +13,7 @@ import (
 
 var (
 	ErrDeleteInitialTransaction       = errors.New("Can't delete initial transaction")
+	ErrTransactionWithInitialCategory = errors.New("Can't create transaction with initial category")
 )
 
 type TransactionService struct {
@@ -57,6 +58,10 @@ func (s *TransactionService) GetAll(userID int32) ([]*store.Transaction, error) 
 }
 
 func (s *TransactionService) Create(userID int32, transactionParams *store.CreateTransactionParams) (*store.Transaction, error) {
+	if transactionParams.CategoryID <= 1 {
+		return nil, ErrTransactionWithInitialCategory
+	}
+
 	transaction := &store.Transaction{
 		AccountID:   transactionParams.AccountID,
 		AmountCents: transactionParams.AmountCents,

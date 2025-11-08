@@ -45,6 +45,8 @@ func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 			response.BadRequestResponse(w, r, err)
 		case errors.Is(err, database.ErrInvalidAccount), errors.Is(err, database.ErrRecordNotFound):
 			response.NotFoundResponse(w, r)
+		case errors.Is(err, service.ErrTransactionWithInitialCategory):
+			response.ForbiddenResponse(w, r, err)
 		default:
 			response.ServerErrorResponse(w, r, err)
 		}
