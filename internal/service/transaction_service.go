@@ -26,7 +26,7 @@ func NewTransactionService(queries *store.Queries, db *sql.DB) *TransactionServi
 func validateTransaction(v *validator.Validator, transaction *store.Transaction) {
 	v.Check(validator.NonZero(transaction.AccountID), "account_id", "Must be provided")
 
-	v.Check(validator.NonZero(transaction.AmountCents), "amount_cents", "Must be provided")
+	// v.Check(validator.NonZero(transaction.AmountCents), "amount_cents", "Must be provided")
 
 	v.Check(validator.NonZero(transaction.CategoryID), "category_id", "Must be provided")
 

@@ -71,7 +71,7 @@ func (s *AccountService) Create(accountParams *store.CreateAccountParams) (*stor
 
 	_, err = qtx.CreateTransaction(ctx, store.CreateTransactionParams{
 		AccountID:   newAccount.ID,
-		AmountCents: 0,
+		AmountCents: accountParams.BalanceCents,
 		CategoryID:  1,
 		Title:       "Initial balance",
 	})

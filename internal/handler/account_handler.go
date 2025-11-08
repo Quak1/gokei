@@ -25,8 +25,9 @@ func NewAccountHandler(svc *service.AccountService) *AccountHandler {
 
 func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Type store.AccountType `json:"type"`
-		Name string            `json:"name"`
+		Type           store.AccountType `json:"type"`
+		Name           string            `json:"name"`
+		InitialBalance int64             `json:"initial_balance"`
 	}
 
 	err := response.ReadJSON(w, r, &input)
@@ -38,9 +39,10 @@ func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctxUser := appcontext.GetContextUser(r)
 
 	params := store.CreateAccountParams{
-		Type:   input.Type,
-		Name:   input.Name,
-		UserID: ctxUser.ID,
+		Type:         input.Type,
+		Name:         input.Name,
+		UserID:       ctxUser.ID,
+		BalanceCents: input.InitialBalance,
 	}
 
 	account, err := h.accountService.Create(&params)
