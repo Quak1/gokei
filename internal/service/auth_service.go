@@ -11,7 +11,9 @@ import (
 	"github.com/Quak1/gokei/pkg/validator"
 )
 
-var ErrInvalidCredentials = errors.New("invalid authentication credentials")
+var (
+	ErrInvalidCredentials = errors.New("invalid authentication credentials")
+)
 
 type AuthService struct {
 	queries      *store.Queries

@@ -18,13 +18,12 @@ SELECT sqlc.embed(transactions) FROM transactions
 INNER JOIN accounts ON transactions.account_id = accounts.id
 WHERE transactions.id = $1 AND accounts.user_id = $2;
 
--- name: DeleteTransactionByID :one
+-- name: DeleteTransactionByID :execresult
 DELETE FROM transactions
 USING accounts
 WHERE transactions.account_id = accounts.id
   AND transactions.id = $1
-  AND accounts.user_id = $2
-RETURNING sqlc.embed(transactions);
+  AND accounts.user_id = $2;
 
 -- name: UpdateTransactionById :execresult
 UPDATE transactions

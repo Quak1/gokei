@@ -61,8 +61,11 @@ func UnauthorizedResponse(w http.ResponseWriter, r *http.Request) {
 	ErrorResponse(w, r, http.StatusUnauthorized, message)
 }
 
-func ForbiddenResponse(w http.ResponseWriter, r *http.Request) {
+func ForbiddenResponse(w http.ResponseWriter, r *http.Request, err error) {
 	message := "You don't have permission to access this resource."
+	if err != nil {
+		message = err.Error()
+	}
 	ErrorResponse(w, r, http.StatusForbidden, message)
 }
 

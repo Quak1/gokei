@@ -144,6 +144,8 @@ func (h *TransactionHandler) DeleteByID(w http.ResponseWriter, r *http.Request) 
 		switch {
 		case errors.Is(err, database.ErrRecordNotFound):
 			response.NotFoundResponse(w, r)
+		case errors.Is(err, service.ErrDeleteInitialTransaction):
+			response.ForbiddenResponse(w, r, err)
 		default:
 			response.ServerErrorResponse(w, r, err)
 		}

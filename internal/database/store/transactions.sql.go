@@ -52,13 +52,12 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 	return i, err
 }
 
-const deleteTransactionByID = `-- name: DeleteTransactionByID :one
+const deleteTransactionByID = `-- name: DeleteTransactionByID :execresult
 DELETE FROM transactions
 USING accounts
 WHERE transactions.account_id = accounts.id
   AND transactions.id = $1
   AND accounts.user_id = $2
-RETURNING transactions.id, transactions.created_at, transactions.updated_at, transactions.amount_cents, transactions.account_id, transactions.category_id, transactions.title, transactions.date, transactions.attachment, transactions.note, transactions.version
 `
 
 type DeleteTransactionByIDParams struct {
@@ -66,27 +65,8 @@ type DeleteTransactionByIDParams struct {
 	UserID int32 `json:"user_id"`
 }
 
-type DeleteTransactionByIDRow struct {
-	Transaction Transaction `json:"transaction"`
-}
-
-func (q *Queries) DeleteTransactionByID(ctx context.Context, arg DeleteTransactionByIDParams) (DeleteTransactionByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, deleteTransactionByID, arg.ID, arg.UserID)
-	var i DeleteTransactionByIDRow
-	err := row.Scan(
-		&i.Transaction.ID,
-		&i.Transaction.CreatedAt,
-		&i.Transaction.UpdatedAt,
-		&i.Transaction.AmountCents,
-		&i.Transaction.AccountID,
-		&i.Transaction.CategoryID,
-		&i.Transaction.Title,
-		&i.Transaction.Date,
-		&i.Transaction.Attachment,
-		&i.Transaction.Note,
-		&i.Transaction.Version,
-	)
-	return i, err
+func (q *Queries) DeleteTransactionByID(ctx context.Context, arg DeleteTransactionByIDParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteTransactionByID, arg.ID, arg.UserID)
 }
 
 const getAllTransactions = `-- name: GetAllTransactions :many

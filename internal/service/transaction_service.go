@@ -11,6 +11,10 @@ import (
 	"github.com/Quak1/gokei/pkg/validator"
 )
 
+var (
+	ErrDeleteInitialTransaction       = errors.New("Can't delete initial transaction")
+)
+
 type TransactionService struct {
 	queries *store.Queries
 	DB      *sql.DB
@@ -167,7 +171,7 @@ func (s *TransactionService) DeleteByID(transactionID, userID int32) error {
 	qtx := s.queries.WithTx(tx)
 	ctx := context.Background()
 
-	t, err := qtx.DeleteTransactionByID(ctx, store.DeleteTransactionByIDParams{
+	t, err := qtx.GetTransactionByID(ctx, store.GetTransactionByIDParams{
 		ID:     transactionID,
 		UserID: userID,
 	})
@@ -181,6 +185,19 @@ func (s *TransactionService) DeleteByID(transactionID, userID int32) error {
 	}
 
 	transaction := t.Transaction
+	if t.Transaction.CategoryID == 1 {
+		return ErrDeleteInitialTransaction
+	}
+
+	result, err := qtx.DeleteTransactionByID(ctx, store.DeleteTransactionByIDParams{
+		ID:     transactionID,
+		UserID: userID,
+	})
+	_, err = result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
 	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
 		ID:           transaction.AccountID,
 		BalanceCents: -transaction.AmountCents,
