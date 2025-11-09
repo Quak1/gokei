@@ -11,11 +11,11 @@ import (
 )
 
 type AccountService struct {
-	queries *store.Queries
+	queries store.QuerierTx
 	DB      *sql.DB
 }
 
-func NewAccountService(queries *store.Queries, db *sql.DB) *AccountService {
+func NewAccountService(queries store.QuerierTx, db *sql.DB) *AccountService {
 	return &AccountService{
 		queries: queries,
 		DB:      db,

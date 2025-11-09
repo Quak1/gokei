@@ -9,6 +9,7 @@ sql:
         out: "internal/database/store"
         sql_package: "database/sql"
         emit_json_tags: true
+        emit_interface: true
         overrides:
           - column: "*.created_at"
             go_struct_tag: 'json:"-"'

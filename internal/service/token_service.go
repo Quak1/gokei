@@ -19,10 +19,10 @@ type Token struct {
 }
 
 type TokenService struct {
-	queries *store.Queries
+	queries store.QuerierTx
 }
 
-func NewTokenService(queries *store.Queries) *TokenService {
+func NewTokenService(queries store.QuerierTx) *TokenService {
 	return &TokenService{
 		queries: queries,
 	}

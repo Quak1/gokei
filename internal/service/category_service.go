@@ -11,10 +11,10 @@ import (
 )
 
 type CategoryService struct {
-	queries *store.Queries
+	queries store.QuerierTx
 }
 
-func NewCategoryService(queries *store.Queries) *CategoryService {
+func NewCategoryService(queries store.QuerierTx) *CategoryService {
 	return &CategoryService{
 		queries: queries,
 	}

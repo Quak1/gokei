@@ -16,11 +16,11 @@ var (
 )
 
 type AuthService struct {
-	queries      *store.Queries
+	queries      store.QuerierTx
 	tokenService *TokenService
 }
 
-func NewAuthService(queries *store.Queries, tokenService *TokenService) *AuthService {
+func NewAuthService(queries store.QuerierTx, tokenService *TokenService) *AuthService {
 	return &AuthService{
 		queries:      queries,
 		tokenService: tokenService,

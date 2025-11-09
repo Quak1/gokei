@@ -17,11 +17,11 @@ var (
 )
 
 type TransactionService struct {
-	queries *store.Queries
+	queries store.QuerierTx
 	DB      *sql.DB
 }
 
-func NewTransactionService(queries *store.Queries, db *sql.DB) *TransactionService {
+func NewTransactionService(queries store.QuerierTx, db *sql.DB) *TransactionService {
 	return &TransactionService{
 		queries: queries,
 		DB:      db,

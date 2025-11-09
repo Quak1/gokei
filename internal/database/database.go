@@ -9,7 +9,7 @@ import (
 
 type DB struct {
 	Connection *sql.DB
-	Queries    *store.Queries
+	Queries    store.QuerierTx
 }
 
 func OpenDB(dsn string) (*DB, error) {
@@ -24,7 +24,7 @@ func OpenDB(dsn string) (*DB, error) {
 		return nil, err
 	}
 
-	queries := store.New(dbConnection)
+	queries := store.NewQueriesWrapper(dbConnection)
 
 	err = queries.InsertInitialCategory(context.Background())
 	if err != nil {

@@ -5,10 +5,10 @@ import (
 )
 
 type HelloService struct {
-	queries *store.Queries
+	queries store.QuerierTx
 }
 
-func NewHelloService(queries *store.Queries) *HelloService {
+func NewHelloService(queries store.QuerierTx) *HelloService {
 	return &HelloService{
 		queries: queries,
 	}

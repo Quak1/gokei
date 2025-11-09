@@ -64,10 +64,10 @@ func doesPasswordMatch(user *store.User, plaintextPassword string) (bool, error)
 }
 
 type UserService struct {
-	queries *store.Queries
+	queries store.QuerierTx
 }
 
-func NewUserService(queries *store.Queries) *UserService {
+func NewUserService(queries store.QuerierTx) *UserService {
 	return &UserService{
 		queries: queries,
 	}
