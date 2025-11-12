@@ -11,7 +11,6 @@ import (
 	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/handler"
 	"github.com/Quak1/gokei/internal/service"
-	_ "github.com/lib/pq"
 )
 
 type config struct {

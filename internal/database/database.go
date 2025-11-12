@@ -3,8 +3,11 @@ package database
 import (
 	"context"
 	"database/sql"
+	"os"
 
 	"github.com/Quak1/gokei/internal/database/store"
+	_ "github.com/lib/pq"
+	"github.com/pressly/goose/v3"
 )
 
 type DB struct {
@@ -24,6 +27,12 @@ func OpenDB(dsn string) (*DB, error) {
 		return nil, err
 	}
 
+	err = RunDBMigrations(dbConnection)
+	if err != nil {
+		dbConnection.Close()
+		return nil, err
+	}
+
 	queries := store.NewQueriesWrapper(dbConnection)
 
 	err = queries.InsertInitialCategory(context.Background())
@@ -38,4 +47,19 @@ func OpenDB(dsn string) (*DB, error) {
 	}
 
 	return db, nil
+}
+
+func RunDBMigrations(db *sql.DB) error {
+	fs := os.DirFS("./sql/migrations/")
+	p, err := goose.NewProvider(goose.DialectPostgres, db, fs)
+	if err != nil {
+		return err
+	}
+
+	_, err = p.Up(context.Background())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
