@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/Quak1/gokei/internal/database/store"
+	"github.com/Quak1/gokei/internal/testutil"
 	"github.com/Quak1/gokei/pkg/assert"
 )
 
@@ -93,6 +94,74 @@ func Test_Create(t *testing.T) {
 			svc := newTestService(tt.mock)
 			_, err := svc.Create(&tt.input)
 			checkError(t, tt.wantErr, err)
+		})
+	}
+}
+
+func Test_Create_Integration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	db, cleanup, err := testutil.NewTestDB()
+	if err != nil {
+		t.Errorf("Error setting up test DB: %v", err)
+	}
+	t.Cleanup(cleanup)
+
+	svc := NewCategoryService(db.Queries)
+
+	tests := []struct {
+		name    string
+		input   store.CreateCategoryParams
+		wantErr bool
+	}{
+		{
+			name: "create category successfully",
+			input: store.CreateCategoryParams{
+				Name:  "Food",
+				Color: "#FF5733",
+				Icon:  "🍕",
+			},
+			wantErr: false,
+		},
+		{
+			name: "create category with invalid color",
+			input: store.CreateCategoryParams{
+				Name:  "Transport",
+				Color: "invalid",
+				Icon:  "🚗",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			category, err := svc.Create(&tt.input)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error, got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if category.Name != tt.input.Name {
+				t.Errorf("name = %s, want %s", category.Name, tt.input.Name)
+			}
+
+			retrieved, err := svc.GetByID(category.ID)
+			if err != nil {
+				t.Errorf("failed to retrieve created category: %v", err)
+			}
+			if retrieved.Name != tt.input.Name {
+				t.Errorf("retrieved name = %s, want %s", retrieved.Name, tt.input.Name)
+			}
 		})
 	}
 }
