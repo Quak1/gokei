@@ -20,11 +20,16 @@ const (
 	POSTGRES_PASSWORD = "password"
 )
 
+var pool *dockertest.Pool
+
 func NewTestDB() (*database.DB, func(), error) {
-	// Uses a sensible default on windows (tcp/http) and linux/osx (socket).
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		return nil, nil, fmt.Errorf("Could not construct pool: %v", err)
+	var err error
+	if pool == nil {
+		// Uses a sensible default on windows (tcp/http) and linux/osx (socket).
+		pool, err = dockertest.NewPool("")
+		if err != nil {
+			return nil, nil, fmt.Errorf("Could not construct pool: %v", err)
+		}
 	}
 
 	err = pool.Client.Ping()

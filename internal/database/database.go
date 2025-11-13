@@ -3,11 +3,11 @@ package database
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/Quak1/gokei/internal/database/store"
+	"github.com/Quak1/gokei/pkg/utils"
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 )
@@ -52,7 +52,7 @@ func OpenDB(dsn string) (*DB, error) {
 }
 
 func RunDBMigrations(db *sql.DB) error {
-	projectRoot, err := findProjectRoot()
+	projectRoot, err := utils.FindProjectRoot()
 	if err != nil {
 		return err
 	}
@@ -71,23 +71,4 @@ func RunDBMigrations(db *sql.DB) error {
 	}
 
 	return nil
-}
-
-func findProjectRoot() (string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir, nil
-		}
-
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			return "", fmt.Errorf("could not find project root (go.mod not found)")
-		}
-		dir = parent
-	}
 }
