@@ -1,4 +1,4 @@
-package service
+package service_test
 
 import (
 	"context"
@@ -7,14 +7,15 @@ import (
 	"testing"
 
 	"github.com/Quak1/gokei/internal/database/store"
-	"github.com/Quak1/gokei/internal/testutil"
+	"github.com/Quak1/gokei/internal/service"
+	"github.com/Quak1/gokei/internal/testutils"
 	"github.com/Quak1/gokei/pkg/assert"
 )
 
-func newTestService(mock func(m *store.MockQuerierTx)) *CategoryService {
+func newTestService(mock func(m *store.MockQuerierTx)) *service.CategoryService {
 	queriesMock := &store.MockQuerierTx{}
 	mock(queriesMock)
-	return NewCategoryService(queriesMock)
+	return service.NewCategoryService(queriesMock)
 }
 
 func checkError(t *testing.T, wantErr bool, err error) {
@@ -103,13 +104,13 @@ func Test_Create_Integration(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db, cleanup, err := testutil.NewTestDB()
+	db, cleanup, err := testutils.NewTestDB()
 	if err != nil {
 		t.Errorf("Error setting up test DB: %v", err)
 	}
 	t.Cleanup(cleanup)
 
-	svc := NewCategoryService(db.Queries)
+	svc := service.NewCategoryService(db.Queries)
 
 	tests := []struct {
 		name    string
@@ -292,7 +293,7 @@ func getStringPointer(s string) *string {
 }
 
 func Test_UpdateByID(t *testing.T) {
-	validCategory := UpdateCategoryParams{
+	validCategory := service.UpdateCategoryParams{
 		Name:  getStringPointer("Test"),
 		Color: getStringPointer("#FFF"),
 		Icon:  getStringPointer("T"),
@@ -300,7 +301,7 @@ func Test_UpdateByID(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		input   UpdateCategoryParams
+		input   service.UpdateCategoryParams
 		id      int32
 		mock    func(*store.MockQuerierTx)
 		expect  *store.Category
@@ -320,7 +321,7 @@ func Test_UpdateByID(t *testing.T) {
 		},
 		{
 			name:  "OK no update",
-			input: UpdateCategoryParams{},
+			input: service.UpdateCategoryParams{},
 			id:    1,
 			mock: func(m *store.MockQuerierTx) {
 				m.GetCategoryByIDFunc = func(ctx context.Context, id int32) (store.Category, error) {
@@ -332,7 +333,7 @@ func Test_UpdateByID(t *testing.T) {
 		},
 		{
 			name:  "validation error - invalid color",
-			input: UpdateCategoryParams{Color: getStringPointer("red")},
+			input: service.UpdateCategoryParams{Color: getStringPointer("red")},
 			id:    1,
 			mock: func(m *store.MockQuerierTx) {
 				m.GetCategoryByIDFunc = func(ctx context.Context, id int32) (store.Category, error) {

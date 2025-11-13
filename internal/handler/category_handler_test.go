@@ -10,12 +10,12 @@ import (
 
 	"github.com/Quak1/gokei/internal/database/store"
 	"github.com/Quak1/gokei/internal/service"
-	"github.com/Quak1/gokei/internal/testutil"
+	"github.com/Quak1/gokei/internal/testutils"
 	"github.com/Quak1/gokei/pkg/assert"
 )
 
-func setupTestHandler(t *testing.T) (*CategoryHandler, *service.CategoryService, func()) {
-	db, cleanup, err := testutil.NewTestDB()
+func setupTestCategoryHandler(t *testing.T) (*CategoryHandler, *service.CategoryService, func()) {
+	db, cleanup, err := testutils.NewTestDB()
 	if err != nil {
 		t.Fatalf("test db setup failed: %v", err)
 	}
@@ -26,14 +26,14 @@ func setupTestHandler(t *testing.T) (*CategoryHandler, *service.CategoryService,
 	return handler, svc.Category, cleanup
 }
 
-func TestCreate(t *testing.T) {
+func TestCategoryHandler_Create(t *testing.T) {
 	t.Parallel()
 
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	handler, _, cleanup := setupTestHandler(t)
+	handler, _, cleanup := setupTestCategoryHandler(t)
 	defer cleanup()
 
 	route := "/v1/categories"
@@ -104,14 +104,14 @@ func TestCreate(t *testing.T) {
 	}
 }
 
-func TestGetAll(t *testing.T) {
+func TestCategoryHandler_GetAll(t *testing.T) {
 	t.Parallel()
 
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	handler, _, cleanup := setupTestHandler(t)
+	handler, _, cleanup := setupTestCategoryHandler(t)
 	defer cleanup()
 
 	route := "/v1/categories"
@@ -153,14 +153,14 @@ func TestGetAll(t *testing.T) {
 	}
 }
 
-func TestGetByID(t *testing.T) {
+func TestCategoryHandler_GetByID(t *testing.T) {
 	t.Parallel()
 
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	handler, _, cleanup := setupTestHandler(t)
+	handler, _, cleanup := setupTestCategoryHandler(t)
 	defer cleanup()
 
 	route := "/v1/categories"
@@ -223,14 +223,14 @@ func TestGetByID(t *testing.T) {
 	}
 }
 
-func TestDeleteByID(t *testing.T) {
+func TestCategoryHandler_DeleteByID(t *testing.T) {
 	t.Parallel()
 
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	handler, _, cleanup := setupTestHandler(t)
+	handler, _, cleanup := setupTestCategoryHandler(t)
 	defer cleanup()
 
 	route := "/v1/categories"
@@ -289,14 +289,14 @@ func TestDeleteByID(t *testing.T) {
 	}
 }
 
-func TestUpdateByID(t *testing.T) {
+func TestCategoryHandler_UpdateByID(t *testing.T) {
 	t.Parallel()
 
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	handler, _, cleanup := setupTestHandler(t)
+	handler, _, cleanup := setupTestCategoryHandler(t)
 	defer cleanup()
 
 	route := "/v1/categories"
