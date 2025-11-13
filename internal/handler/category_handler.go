@@ -39,7 +39,6 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 		case errors.As(err, &validationErr):
 			response.FailedValidationResponse(w, r, validationErr)
 		default:
-			// TODO handle errors
 			response.ServerErrorResponse(w, r, err)
 		}
 
@@ -57,7 +56,6 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *CategoryHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	categories, err := h.categoryService.GetAll()
-
 	if err != nil {
 		response.ServerErrorResponse(w, r, err)
 	}
