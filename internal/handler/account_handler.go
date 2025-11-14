@@ -60,7 +60,7 @@ func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	headers := make(http.Header)
-	headers.Set("Location", fmt.Sprintf("/v1/categories/%d", account.ID))
+	headers.Set("Location", fmt.Sprintf("/v1/accounts/%d", account.ID))
 
 	err = response.Created(w, response.Envelope{"account": account}, headers)
 	if err != nil {

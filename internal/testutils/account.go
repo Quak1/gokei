@@ -7,12 +7,17 @@ import (
 	"github.com/Quak1/gokei/internal/service"
 )
 
-func CreateTestAccount(t *testing.T, accountSvc *service.AccountService, userID int32) *store.Account {
+func CreateTestAccount(t *testing.T, accountSvc *service.AccountService, userID int32, name ...string) *store.Account {
 	t.Helper()
+
+	accountName := "Test account"
+	if len(name) > 0 {
+		accountName = name[0]
+	}
 
 	account, err := accountSvc.Create(&store.CreateAccountParams{
 		Type:         store.AccountTypeDebit,
-		Name:         "Test Account",
+		Name:         accountName,
 		UserID:       userID,
 		BalanceCents: 10000,
 	})
