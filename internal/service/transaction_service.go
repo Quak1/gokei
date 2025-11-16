@@ -58,8 +58,11 @@ func (s *TransactionService) GetAll(userID int32) ([]*store.Transaction, error) 
 }
 
 func (s *TransactionService) Create(userID int32, transactionParams *store.CreateTransactionParams) (*store.Transaction, error) {
-	if transactionParams.CategoryID <= 1 {
+	if transactionParams.CategoryID == 1 {
 		return nil, ErrTransactionWithInitialCategory
+	}
+	if transactionParams.CategoryID < 1 {
+		return nil, database.ErrRecordNotFound
 	}
 
 	transaction := &store.Transaction{
