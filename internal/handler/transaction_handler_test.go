@@ -546,6 +546,7 @@ func TestTransactionHandler_DeleteByID(t *testing.T) {
 		})
 	}
 }
+
 func TestTransactionHandler_UpdateByID(t *testing.T) {
 	t.Parallel()
 	if testing.Short() {

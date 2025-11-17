@@ -69,7 +69,7 @@ func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isSameUserID(r, id) {
-		response.UnauthorizedResponse(w, r)
+		response.NotFoundResponse(w, r)
 		return
 	}
 
@@ -98,7 +98,7 @@ func (h *UserHandler) DeleteByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isSameUserID(r, id) {
-		response.UnauthorizedResponse(w, r)
+		response.NotFoundResponse(w, r)
 		return
 	}
 
@@ -127,7 +127,7 @@ func (h *UserHandler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isSameUserID(r, id) {
-		response.UnauthorizedResponse(w, r)
+		response.NotFoundResponse(w, r)
 		return
 	}
 
