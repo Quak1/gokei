@@ -49,20 +49,6 @@ func hashPassword(plaintextPassword string) ([]byte, error) {
 	return hash, nil
 }
 
-func doesPasswordMatch(user *store.User, plaintextPassword string) (bool, error) {
-	err := bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(plaintextPassword))
-	if err != nil {
-		switch {
-		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
-			return false, nil
-		default:
-			return false, err
-		}
-	}
-
-	return true, nil
-}
-
 type UserService struct {
 	queries store.QuerierTx
 }

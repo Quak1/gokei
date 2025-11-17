@@ -9,11 +9,26 @@ import (
 	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/database/store"
 	"github.com/Quak1/gokei/pkg/validator"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
 	ErrInvalidCredentials = errors.New("invalid authentication credentials")
 )
+
+func doesPasswordMatch(user *store.User, plaintextPassword string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(plaintextPassword))
+	if err != nil {
+		switch {
+		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
+			return false, nil
+		default:
+			return false, err
+		}
+	}
+
+	return true, nil
+}
 
 type AuthService struct {
 	queries      store.QuerierTx
