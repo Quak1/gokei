@@ -36,3 +36,13 @@ func CreatePostRequest(t *testing.T, route string, requestBody any, user *store.
 
 	return req
 }
+
+func CreateGetRequest(t *testing.T, route string, user *store.User) *http.Request {
+	req := httptest.NewRequest(http.MethodGet, route, nil)
+	req = appcontext.SetContextUser(req, &store.GetUserFromTokenRow{
+		ID:       user.ID,
+		Username: user.Username,
+	})
+
+	return req
+}

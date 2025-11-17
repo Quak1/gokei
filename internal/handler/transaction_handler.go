@@ -75,7 +75,6 @@ func (h *TransactionHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	err = response.OK(w, response.Envelope{"transactions": transactions})
 	if err != nil {
 		response.ServerErrorResponse(w, r, err)
-		return
 	}
 }
 
@@ -102,7 +101,6 @@ func (h *TransactionHandler) GetAccountTransactions(w http.ResponseWriter, r *ht
 	err = response.OK(w, response.Envelope{"transactions": transactions})
 	if err != nil {
 		response.ServerErrorResponse(w, r, err)
-		return
 	}
 }
 
