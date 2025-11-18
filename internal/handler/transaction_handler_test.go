@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/Quak1/gokei/internal/database/store"
 	"github.com/Quak1/gokei/internal/service"
@@ -597,6 +598,48 @@ func TestTransactionHandler_UpdateByID(t *testing.T) {
 			},
 		},
 		{
+			name: "Update full transaction",
+			body: map[string]any{
+				"amount_cents": 1234,
+				"account_id":   2,
+				"category_id":  3,
+				"title":        "Updated transaction title",
+				"date":         "2025-11-17T00:00:00Z",
+				"attachment":   "att",
+				"note":         "updated transaction note",
+			},
+			transactionID:  transactionID,
+			expectedStatus: http.StatusOK,
+			setup: func(t *testing.T) int32 {
+				testutils.CreateTestAccount(t, svc.Account, user.ID)
+				testutils.CreateTestCategory(t, svc.Category)
+				return transaction.ID
+			},
+			validate: func(t *testing.T, r *http.Response) {
+				var resBody map[string]*store.Transaction
+				json.NewDecoder(r.Body).Decode(&resBody)
+
+				resTransaction := resBody["transaction"]
+				transaction, err := svc.Transaction.GetByID(resTransaction.ID, user.ID)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				date, err := time.Parse(time.DateOnly, "2025-11-17")
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				assert.Equal(t, transaction.AmountCents, 1234)
+				assert.Equal(t, transaction.AccountID, 2)
+				assert.Equal(t, transaction.CategoryID, 3)
+				assert.Equal(t, transaction.Title, "Updated transaction title")
+				assert.Equal(t, transaction.Date.UTC(), date)
+				assert.Equal(t, transaction.Attachment, "att")
+				assert.Equal(t, transaction.Note, "updated transaction note")
+			},
+		},
+		{
 			name: "Failt to update other user's transaction",
 			body: map[string]any{
 				"title": "new title",
@@ -612,7 +655,15 @@ func TestTransactionHandler_UpdateByID(t *testing.T) {
 		{
 			name: "Invalid category",
 			body: map[string]any{
-				"category": 99,
+				"category_id": 99,
+			},
+			transactionID:  transactionID,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Invalid key",
+			body: map[string]any{
+				"test": "test",
 			},
 			transactionID:  transactionID,
 			expectedStatus: http.StatusBadRequest,
