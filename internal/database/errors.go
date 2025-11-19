@@ -8,10 +8,11 @@ import (
 )
 
 var (
-	ErrRecordNotFound  = errors.New("record not found")
-	ErrEditConflict    = errors.New("edit conflict")
-	ErrInvalidCategory = errors.New("This category does not exist")
-	ErrInvalidAccount  = errors.New("This account does not exist")
+	ErrRecordNotFound        = errors.New("record not found")
+	ErrEditConflict          = errors.New("edit conflict")
+	ErrInvalidCategory       = errors.New("This category does not exist")
+	ErrUpdateInitialCategory = errors.New("Can't update initial category")
+	ErrInvalidAccount        = errors.New("This account does not exist")
 )
 
 func HandleForeignKeyError(err error) error {

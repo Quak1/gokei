@@ -186,6 +186,8 @@ func (h *TransactionHandler) UpdateByID(w http.ResponseWriter, r *http.Request) 
 			response.ConflictResponse(w, r)
 		case errors.Is(err, database.ErrInvalidAccount), errors.Is(err, database.ErrInvalidCategory):
 			response.BadRequestResponse(w, r, err)
+		case errors.Is(err, service.ErrTransactionWithInitialCategory):
+			response.ForbiddenResponse(w, r, err)
 		default:
 			response.ServerErrorResponse(w, r, err)
 		}

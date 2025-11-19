@@ -17,6 +17,8 @@ type DB struct {
 	Queries    store.QuerierTx
 }
 
+const InitialCategoryID int32 = 1
+
 func OpenDB(dsn string) (*DB, error) {
 	dbConnection, err := sql.Open("postgres", dsn)
 	if err != nil {

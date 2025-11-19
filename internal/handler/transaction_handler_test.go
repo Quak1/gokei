@@ -377,7 +377,7 @@ func TestTransactionHandler_GetByID(t *testing.T) {
 			},
 		},
 		{
-			name:           "Failt to get other user's transaction",
+			name:           "Fail to get other user's transaction",
 			expectedStatus: http.StatusNotFound,
 			setup: func(t *testing.T) int32 {
 				user2 := testutils.CreateTestUser(t, svc.User, "user2")
@@ -478,7 +478,7 @@ func TestTransactionHandler_DeleteByID(t *testing.T) {
 			},
 		},
 		{
-			name:           "Failt to delete initial transaction",
+			name:           "Fail to delete initial transaction",
 			expectedStatus: http.StatusForbidden,
 			setup: func(t *testing.T) int32 {
 				transactions, err := svc.Transaction.GetAll(user.ID)
@@ -492,7 +492,7 @@ func TestTransactionHandler_DeleteByID(t *testing.T) {
 			},
 		},
 		{
-			name:           "Failt to delete other user's transaction",
+			name:           "Fail to delete other user's transaction",
 			expectedStatus: http.StatusNotFound,
 			setup: func(t *testing.T) int32 {
 				user2 := testutils.CreateTestUser(t, svc.User, "user2")
@@ -640,7 +640,7 @@ func TestTransactionHandler_UpdateByID(t *testing.T) {
 			},
 		},
 		{
-			name: "Failt to update other user's transaction",
+			name: "Fail to update other user's transaction",
 			body: map[string]any{
 				"title": "new title",
 			},
@@ -651,6 +651,15 @@ func TestTransactionHandler_UpdateByID(t *testing.T) {
 				transaction := testutils.CreateTestTransaction(t, svc.Transaction, user2.ID, account2.ID, category.ID)
 				return transaction.ID
 			},
+		},
+		{
+			name:          "Can't use initial category",
+			transactionID: transactionID,
+			body: map[string]any{
+				"title":       "New title",
+				"category_id": 1,
+			},
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name: "Invalid category",

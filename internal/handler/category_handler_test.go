@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/Quak1/gokei/internal/database/store"
@@ -230,8 +231,14 @@ func TestCategoryHandler_DeleteByID(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	handler, _, cleanup := setupTestCategoryHandler(t)
+	handler, svc, cleanup := setupTestCategoryHandler(t)
 	defer cleanup()
+
+	category, err := svc.Create(&store.CreateCategoryParams{Name: "Test", Color: "#123", Icon: "T"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	categoryID := strconv.Itoa(int(category.ID))
 
 	route := "/v1/categories"
 	idPath := "categoryID"
@@ -244,12 +251,17 @@ func TestCategoryHandler_DeleteByID(t *testing.T) {
 	}{
 		{
 			name:           "Delete category",
-			id:             "1",
+			id:             categoryID,
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:           "Not found",
+			name:           "Fail to delete initial category",
 			id:             "1",
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "Not found",
+			id:             "2",
 			expectedStatus: http.StatusNotFound,
 		},
 		{
@@ -296,8 +308,14 @@ func TestCategoryHandler_UpdateByID(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	handler, _, cleanup := setupTestCategoryHandler(t)
+	handler, svc, cleanup := setupTestCategoryHandler(t)
 	defer cleanup()
+
+	category, err := svc.Create(&store.CreateCategoryParams{Name: "Test", Color: "#123", Icon: "T"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	categoryID := strconv.Itoa(int(category.ID))
 
 	route := "/v1/categories"
 	idPath := "categoryID"
@@ -311,7 +329,7 @@ func TestCategoryHandler_UpdateByID(t *testing.T) {
 	}{
 		{
 			name: "Update category",
-			id:   "1",
+			id:   categoryID,
 			requestBody: map[string]any{
 				"name":  "Test Update",
 				"color": "#ABC",
@@ -330,7 +348,7 @@ func TestCategoryHandler_UpdateByID(t *testing.T) {
 		},
 		{
 			name: "Update partial category",
-			id:   "1",
+			id:   categoryID,
 			requestBody: map[string]any{
 				"color": "#123456",
 			},
@@ -346,8 +364,16 @@ func TestCategoryHandler_UpdateByID(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name: "Validation error",
+			name: "Fail to update initial category",
 			id:   "1",
+			requestBody: map[string]any{
+				"color": "#123456",
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name: "Validation error",
+			id:   categoryID,
 			requestBody: map[string]any{
 				"color": "FFF",
 			},
@@ -355,7 +381,7 @@ func TestCategoryHandler_UpdateByID(t *testing.T) {
 		},
 		{
 			name:           "Incorrect JSON",
-			id:             "1",
+			id:             categoryID,
 			requestBody:    "",
 			expectedStatus: http.StatusBadRequest,
 		},

@@ -102,6 +102,8 @@ func (h *CategoryHandler) DeleteByID(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, database.ErrRecordNotFound):
 			response.NotFoundResponse(w, r)
+		case errors.Is(err, database.ErrUpdateInitialCategory):
+			response.ForbiddenResponse(w, r, err)
 		default:
 			response.ServerErrorResponse(w, r, err)
 		}
@@ -138,6 +140,8 @@ func (h *CategoryHandler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 			response.NotFoundResponse(w, r)
 		case errors.Is(err, database.ErrEditConflict):
 			response.ConflictResponse(w, r)
+		case errors.Is(err, database.ErrUpdateInitialCategory):
+			response.ForbiddenResponse(w, r, err)
 		default:
 			response.ServerErrorResponse(w, r, err)
 		}

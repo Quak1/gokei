@@ -86,6 +86,9 @@ func (s *CategoryService) DeleteByID(id int32) error {
 	if id < 1 {
 		return database.ErrRecordNotFound
 	}
+	if id == database.InitialCategoryID {
+		return database.ErrUpdateInitialCategory
+	}
 
 	result, err := s.queries.DeleteCategoryById(context.Background(), id)
 	if err != nil {
@@ -113,6 +116,9 @@ type UpdateCategoryParams struct {
 func (s *CategoryService) UpdateByID(id int32, updateParams *UpdateCategoryParams) (*store.Category, error) {
 	if id < 1 {
 		return nil, database.ErrRecordNotFound
+	}
+	if id == database.InitialCategoryID {
+		return nil, database.ErrUpdateInitialCategory
 	}
 
 	ctx := context.Background()
