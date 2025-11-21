@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/Quak1/gokei/internal/database"
@@ -13,6 +14,7 @@ import (
 
 var (
 	ErrDeleteInitialTransaction       = errors.New("Can't delete initial transaction")
+	ErrRefundInitialTransaction       = errors.New("Can't refund initial transaction")
 	ErrTransactionWithInitialCategory = errors.New("Can't create transaction with initial category")
 )
 
@@ -357,4 +359,69 @@ func (s *TransactionService) UpdateByID(transactionID, userID int32, updateParam
 	}
 
 	return &transaction, nil
+}
+
+type RefundTransactionParams struct {
+	Reason *string `json:"reason"`
+}
+
+func (s *TransactionService) RefundByID(transactionID, userID int32, params *RefundTransactionParams) (*store.Transaction, error) {
+	if transactionID < 1 || userID < 1 {
+		return nil, database.ErrRecordNotFound
+	}
+
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	qtx := s.queries.WithTx(tx)
+	ctx := context.Background()
+
+	t, err := qtx.GetTransactionByID(ctx, store.GetTransactionByIDParams{
+		ID:     transactionID,
+		UserID: userID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, database.ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	transaction := t.Transaction
+	if t.Transaction.CategoryID == database.InitialCategoryID {
+		return nil, ErrRefundInitialTransaction
+	}
+
+	refundTransaction, err := qtx.CreateTransaction(ctx, store.CreateTransactionParams{
+		AccountID:   transaction.AccountID,
+		AmountCents: -transaction.AmountCents,
+		CategoryID:  transaction.CategoryID,
+		Title:       fmt.Sprintf("[REFUND #%d] %s", transaction.ID, transaction.Title),
+		Attachment:  transaction.Attachment,
+		Note:        transaction.Note,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
+		ID:           refundTransaction.AccountID,
+		BalanceCents: refundTransaction.AmountCents,
+		UserID:       userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &refundTransaction, nil
 }

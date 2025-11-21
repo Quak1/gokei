@@ -39,6 +39,7 @@ func (app *application) routes(s *service.Service) http.Handler {
 	mux.Handle("GET /v1/transactions/{transactionID}", mw.Authenticate(http.HandlerFunc(app.handler.Transaction.GetByID)))
 	mux.Handle("PUT /v1/transactions/{transactionID}", mw.Authenticate(http.HandlerFunc(app.handler.Transaction.UpdateByID)))
 	mux.Handle("DELETE /v1/transactions/{transactionID}", mw.Authenticate(http.HandlerFunc(app.handler.Transaction.DeleteByID)))
+	mux.Handle("POST /v1/transactions/{transactionID}/refund", mw.Authenticate(http.HandlerFunc(app.handler.Transaction.RefundByID)))
 
 	return mux
 }

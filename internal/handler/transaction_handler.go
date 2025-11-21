@@ -199,3 +199,38 @@ func (h *TransactionHandler) UpdateByID(w http.ResponseWriter, r *http.Request) 
 		response.ServerErrorResponse(w, r, err)
 	}
 }
+
+func (h *TransactionHandler) RefundByID(w http.ResponseWriter, r *http.Request) {
+	id, err := readIntParam(r, "transactionID")
+	if err != nil {
+		response.BadRequestResponseGeneric(w, r)
+		return
+	}
+
+	var input service.RefundTransactionParams
+	err = response.ReadJSON(w, r, &input)
+	if err != nil {
+		response.BadRequestResponse(w, r, err)
+		return
+	}
+
+	ctxUser := appcontext.GetContextUser(r)
+
+	transaction, err := h.transactionService.RefundByID(int32(id), ctxUser.ID, &input)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrRecordNotFound):
+			response.NotFoundResponse(w, r)
+		case errors.Is(err, service.ErrRefundInitialTransaction):
+			response.ForbiddenResponse(w, r, err)
+		default:
+			response.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = response.OK(w, response.Envelope{"transaction": transaction})
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+	}
+}

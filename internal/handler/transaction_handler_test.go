@@ -736,3 +736,122 @@ func TestTransactionHandler_UpdateByID(t *testing.T) {
 		})
 	}
 }
+func TestTransactionHandler_RefundByID(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	handler, svc, cleanup := setupTestTransactionHandler(t)
+	defer cleanup()
+
+	user := testutils.CreateTestUser(t, svc.User, "testuser")
+	account := testutils.CreateTestAccount(t, svc.Account, user.ID)
+	category := testutils.CreateTestCategory(t, svc.Category)
+	transaction := testutils.CreateTestTransaction(t, svc.Transaction, user.ID, account.ID, category.ID)
+	transactionID := strconv.Itoa(int(transaction.ID))
+
+	route := "/v1/transactions"
+
+	tests := []struct {
+		name           string
+		body           any
+		transactionID  string
+		expectedStatus int
+		setup          func(*testing.T) int32
+		validate       func(*testing.T, *http.Response)
+	}{
+		{
+			name:           "Refund transaction",
+			transactionID:  transactionID,
+			expectedStatus: http.StatusOK,
+			validate: func(t *testing.T, r *http.Response) {
+				var resBody map[string]*store.Transaction
+				json.NewDecoder(r.Body).Decode(&resBody)
+
+				resTransaction, err := svc.Transaction.GetByID(resBody["transaction"].ID, user.ID)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				assert.StringContains(t, resTransaction.Title, "REFUND")
+				assert.StringContains(t, resTransaction.Title, transaction.Title)
+				assert.Equal(t, resTransaction.AmountCents, -transaction.AmountCents)
+				assert.Equal(t, resTransaction.CategoryID, transaction.CategoryID)
+				assert.Equal(t, resTransaction.Note, transaction.Note)
+				assert.Equal(t, resTransaction.Attachment, transaction.Attachment)
+
+				balance, err := svc.Account.GetSumBalance(account.ID, user.ID)
+				if err != nil {
+					t.Fatal()
+				}
+
+				assert.Equal(t, balance, account.BalanceCents)
+			},
+		},
+		{
+			name:           "Fail to refund other user's transaction",
+			expectedStatus: http.StatusNotFound,
+			setup: func(t *testing.T) int32 {
+				user2 := testutils.CreateTestUser(t, svc.User, "user2")
+				account2 := testutils.CreateTestAccount(t, svc.Account, user2.ID)
+				transaction := testutils.CreateTestTransaction(t, svc.Transaction, user2.ID, account2.ID, category.ID)
+				return transaction.ID
+			},
+		},
+		{
+			name:           "Fail to refund initial balance transaction",
+			transactionID:  "1",
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "Incorrect JSON",
+			body:           "",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Not found",
+			expectedStatus: http.StatusNotFound,
+			transactionID:  "999",
+		},
+		{
+			name:           "Negative ID",
+			expectedStatus: http.StatusNotFound,
+			transactionID:  "-1",
+		},
+		{
+			name:           "Empty ID",
+			expectedStatus: http.StatusBadRequest,
+			transactionID:  "",
+		},
+		{
+			name:           "Invalid ID",
+			expectedStatus: http.StatusBadRequest,
+			transactionID:  "test",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				id := tt.setup(t)
+				tt.transactionID = strconv.Itoa(int(id))
+			}
+
+			req := testutils.CreatePostRequest(t, route, tt.body, user)
+			req.SetPathValue("transactionID", tt.transactionID)
+
+			rr := httptest.NewRecorder()
+			handler.RefundByID(rr, req)
+
+			res := rr.Result()
+			defer res.Body.Close()
+
+			assert.Equal(t, res.StatusCode, tt.expectedStatus)
+
+			if tt.validate != nil {
+				tt.validate(t, res)
+			}
+		})
+	}
+}
