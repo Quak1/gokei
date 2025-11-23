@@ -639,3 +639,168 @@ func TestAccountHandler_UpdateByID(t *testing.T) {
 		})
 	}
 }
+
+func TestAccountHandler_TransferByID(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	handler, svc, cleanup := setupTestAccountHandler(t)
+	defer cleanup()
+
+	user := testutils.CreateTestUser(t, svc.User, "testuser")
+	account := testutils.CreateTestAccount(t, svc.Account, user.ID)
+	account2 := testutils.CreateTestAccount(t, svc.Account, user.ID)
+
+	accountID := strconv.Itoa(int(account.ID))
+	target := "/v1/accounts"
+	idPath := "accountID"
+
+	tests := []struct {
+		name           string
+		requestBody    any
+		senderID       string
+		expectedStatus int
+		setup          func(*testing.T) *http.Request
+		validate       func(*testing.T, *http.Response)
+	}{
+		{
+			name: "Transfer funds",
+			requestBody: map[string]any{
+				"amount":       1000,
+				"recipient_id": account2.ID,
+			},
+			senderID:       accountID,
+			expectedStatus: http.StatusOK,
+			validate: func(t *testing.T, rs *http.Response) {
+				var resBody map[string]*store.Transaction
+				json.NewDecoder(rs.Body).Decode(&resBody)
+
+				transaction := resBody["transaction"]
+				assert.Equal(t, transaction.AmountCents, -1000)
+				assert.StringContains(t, transaction.Title, "TRANSFER")
+
+				fetchAccount, err := svc.Account.GetByID(account.ID, user.ID)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				assert.Equal(t, fetchAccount.BalanceCents, account.BalanceCents-1000)
+			},
+		},
+		{
+			name: "Fail to transfer from other user's account",
+			setup: func(t *testing.T) *http.Request {
+				user2 := testutils.CreateTestUser(t, svc.User, "user2")
+				user2Account := testutils.CreateTestAccount(t, svc.Account, user2.ID)
+
+				requestBody := map[string]any{
+					"amount":       1000,
+					"recipient_id": user2Account.ID,
+				}
+
+				req := testutils.CreatePostRequest(t, target, requestBody, user2)
+				req.SetPathValue(idPath, accountID)
+
+				return req
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name: "Validation error - fail to transfer to same account",
+			requestBody: map[string]any{
+				"amount":       1000,
+				"recipient_id": account.ID,
+			},
+			senderID:       accountID,
+			expectedStatus: http.StatusUnprocessableEntity,
+		},
+		{
+			name: "Validation error - nagative amount",
+			requestBody: map[string]any{
+				"amount":       -100,
+				"recipient_id": account2.ID,
+			},
+			senderID:       accountID,
+			expectedStatus: http.StatusUnprocessableEntity,
+		},
+		{
+			name:           "Incorrect JSON",
+			requestBody:    "",
+			senderID:       accountID,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Not found",
+			requestBody: map[string]any{
+				"amount":       100,
+				"recipient_id": account2.ID,
+			},
+			senderID:       "999",
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name: "Negative ID",
+			requestBody: map[string]any{
+				"amount":       100,
+				"recipient_id": account2.ID,
+			},
+			senderID:       "-5",
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name: "Empty ID",
+			requestBody: map[string]any{
+				"amount":       100,
+				"recipient_id": account2.ID,
+			},
+			senderID:       "",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Invalid ID",
+			requestBody: map[string]any{
+				"amount":       100,
+				"recipient_id": account2.ID,
+			},
+			senderID:       "test",
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var req *http.Request
+			if tt.setup != nil {
+				req = tt.setup(t)
+			} else {
+				body, err := json.Marshal(tt.requestBody)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				req = httptest.NewRequest(http.MethodPost, target, bytes.NewBuffer(body))
+				req.Header.Set("Contenty-Type", "application/json")
+				req.SetPathValue(idPath, tt.senderID)
+				req = appcontext.SetContextUser(req, &store.GetUserFromTokenRow{
+					ID:       user.ID,
+					Username: user.Username,
+				})
+			}
+
+			rr := httptest.NewRecorder()
+			handler.TransferByID(rr, req)
+
+			rs := rr.Result()
+			defer rs.Body.Close()
+
+			assert.Equal(t, rs.StatusCode, tt.expectedStatus)
+
+			if tt.validate != nil {
+				tt.validate(t, rs)
+			}
+		})
+	}
+}

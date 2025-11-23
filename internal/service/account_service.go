@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/database/store"
@@ -212,4 +213,108 @@ func (s *AccountService) UpdateByID(accountID, userID int32, updateParams *Updat
 	}
 
 	return &account, nil
+}
+
+type TransferParams struct {
+	AmountCents int64 `json:"amount"`
+	RecipientID int32 `json:"recipient_id"`
+}
+
+func (s *AccountService) TransferByID(userID, accountID int32, params *TransferParams) (*store.Transaction, error) {
+	if accountID < 1 || userID < 1 {
+		return nil, database.ErrRecordNotFound
+	}
+
+	v := validator.New()
+	v.Check(params.AmountCents > 0, "amount", "Transfer amount must be at least 1")
+	v.Check(accountID != params.RecipientID, "recipient_id", "Transfer account must be different to recipient account")
+	if !v.Valid() {
+		return nil, v.GetErrors()
+	}
+
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	qtx := s.queries.WithTx(tx)
+	ctx := context.Background()
+
+	senderAccount, err := qtx.GetAccountByID(ctx, store.GetAccountByIDParams{
+		ID:     accountID,
+		UserID: userID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, database.ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	recipientAccount, err := qtx.GetAccountByID(ctx, store.GetAccountByIDParams{
+		ID:     params.RecipientID,
+		UserID: userID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, database.ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	title := fmt.Sprintf("[TRANSFER] FROM '%s' TO '%s'", senderAccount.Name, recipientAccount.Name)
+
+	sendTransaction, err := qtx.CreateTransaction(ctx, store.CreateTransactionParams{
+		AccountID:   senderAccount.ID,
+		AmountCents: -params.AmountCents,
+		CategoryID:  database.InitialCategoryID, // TODO use special category?
+		Title:       title,
+		Attachment:  "",
+		Note:        "",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
+		BalanceCents: sendTransaction.AmountCents,
+		ID:           sendTransaction.AccountID,
+		UserID:       userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	receiveTransaction, err := qtx.CreateTransaction(ctx, store.CreateTransactionParams{
+		AccountID:   recipientAccount.ID,
+		AmountCents: params.AmountCents,
+		CategoryID:  database.InitialCategoryID, // TODO
+		Title:       title,
+		Attachment:  "",
+		Note:        "",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
+		BalanceCents: receiveTransaction.AmountCents,
+		ID:           receiveTransaction.AccountID,
+		UserID:       userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &sendTransaction, nil
 }

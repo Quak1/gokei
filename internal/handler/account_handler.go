@@ -197,3 +197,39 @@ func (h *AccountHandler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 		response.ServerErrorResponse(w, r, err)
 	}
 }
+
+func (h *AccountHandler) TransferByID(w http.ResponseWriter, r *http.Request) {
+	accountID, err := readIntParam(r, "accountID")
+	if err != nil {
+		response.BadRequestResponseGeneric(w, r)
+		return
+	}
+
+	var input service.TransferParams
+	err = response.ReadJSON(w, r, &input)
+	if err != nil {
+		response.BadRequestResponse(w, r, err)
+		return
+	}
+
+	ctxUser := appcontext.GetContextUser(r)
+
+	transaction, err := h.accountService.TransferByID(ctxUser.ID, int32(accountID), &input)
+	if err != nil {
+		var validationErr *validator.ValidationError
+		switch {
+		case errors.As(err, &validationErr):
+			response.FailedValidationResponse(w, r, validationErr)
+		case errors.Is(err, database.ErrRecordNotFound):
+			response.NotFoundResponse(w, r)
+		default:
+			response.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = response.OK(w, response.Envelope{"transaction": transaction})
+	if err != nil {
+		response.ServerErrorResponse(w, r, err)
+	}
+}
