@@ -247,7 +247,7 @@ func Test_DeleteByID(t *testing.T) {
 	}{
 		{
 			name:    "OK",
-			input:   1,
+			input:   2,
 			mock:    func(m *store.MockQuerierTx) {},
 			wantErr: false,
 		},
@@ -310,7 +310,7 @@ func Test_UpdateByID(t *testing.T) {
 		{
 			name:  "OK",
 			input: validCategory,
-			id:    1,
+			id:    2,
 			mock: func(m *store.MockQuerierTx) {
 				m.GetCategoryByIDFunc = func(ctx context.Context, id int32) (store.Category, error) {
 					return store.Category{Name: "Original", Color: "#000", Icon: "O"}, nil
@@ -322,7 +322,7 @@ func Test_UpdateByID(t *testing.T) {
 		{
 			name:  "OK no update",
 			input: service.UpdateCategoryParams{},
-			id:    1,
+			id:    2,
 			mock: func(m *store.MockQuerierTx) {
 				m.GetCategoryByIDFunc = func(ctx context.Context, id int32) (store.Category, error) {
 					return store.Category{Name: "Original", Color: "#000", Icon: "O"}, nil
@@ -334,7 +334,7 @@ func Test_UpdateByID(t *testing.T) {
 		{
 			name:  "validation error - invalid color",
 			input: service.UpdateCategoryParams{Color: getStringPointer("red")},
-			id:    1,
+			id:    2,
 			mock: func(m *store.MockQuerierTx) {
 				m.GetCategoryByIDFunc = func(ctx context.Context, id int32) (store.Category, error) {
 					return store.Category{Name: "Original", Color: "#000", Icon: "O"}, nil
