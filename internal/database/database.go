@@ -18,7 +18,7 @@ type DB struct {
 	Queries    store.QuerierTx
 }
 
-var initialCategoryID int32 = 1
+var initialCategoryID int32 = 0
 var adminUserID int32 = 0
 
 func InitialCategoryID() int32 {
@@ -55,7 +55,7 @@ func OpenDB(dsn string) (*DB, error) {
 		return nil, err
 	}
 
-	err = queries.InsertInitialCategory(context.Background())
+	err = createInitialCategory(queries)
 	if err != nil {
 		dbConnection.Close()
 		return nil, err
@@ -117,6 +117,31 @@ func createAdminUser(queries *store.QueriesWrapper) error {
 	}
 
 	adminUserID = newUser.ID
+
+	return nil
+}
+
+func createInitialCategory(queries *store.QueriesWrapper) error {
+	category := store.CreateCategoryParams{
+		Name:  "InitialBalance",
+		Color: "#123",
+		Icon:  "B",
+	}
+
+	initialCategory, err := queries.GetCategoryByID(context.Background(), 1)
+	if err == nil {
+		initialCategoryID = initialCategory.ID
+		return nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+
+	newCategory, err := queries.CreateCategory(context.Background(), category)
+	if err != nil {
+		return err
+	}
+
+	initialCategoryID = newCategory.ID
 
 	return nil
 }

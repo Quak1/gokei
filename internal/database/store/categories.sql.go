@@ -101,17 +101,6 @@ func (q *Queries) GetCategoryByID(ctx context.Context, id int32) (Category, erro
 	return i, err
 }
 
-const insertInitialCategory = `-- name: InsertInitialCategory :exec
-INSERT INTO categories (name, color, icon)
-SELECT 'InitialBalance', '#FFF', 'icon'
-WHERE NOT EXISTS (SELECT 1 FROM categories)
-`
-
-func (q *Queries) InsertInitialCategory(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, insertInitialCategory)
-	return err
-}
-
 const updateCategoryById = `-- name: UpdateCategoryById :execresult
 UPDATE categories
 SET name = $1, color = $2, icon = $3, version = version + 1, updated_at = NOW()

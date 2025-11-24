@@ -28,7 +28,6 @@ type MockQuerierTx struct {
 	GetUserByIDFunc                func(ctx context.Context, id int32) (User, error)
 	GetUserByUsernameFunc          func(ctx context.Context, username string) (User, error)
 	GetUserFromTokenFunc           func(ctx context.Context, arg GetUserFromTokenParams) (GetUserFromTokenRow, error)
-	InsertInitialCategoryFunc      func(ctx context.Context) error
 	UpdateAccountByIdFunc          func(ctx context.Context, arg UpdateAccountByIdParams) (sql.Result, error)
 	UpdateBalanceFunc              func(ctx context.Context, arg UpdateBalanceParams) (int64, error)
 	UpdateCategoryByIdFunc         func(ctx context.Context, arg UpdateCategoryByIdParams) (sql.Result, error)
@@ -131,13 +130,6 @@ func (m *MockQuerierTx) UpdateCategoryById(ctx context.Context, arg UpdateCatego
 		return m.UpdateCategoryByIdFunc(ctx, arg)
 	}
 	return NewMockResult(1), nil
-}
-
-func (m *MockQuerierTx) InsertInitialCategory(ctx context.Context) error {
-	if m.InsertInitialCategoryFunc != nil {
-		return m.InsertInitialCategoryFunc(ctx)
-	}
-	return nil
 }
 
 // Token queries

@@ -18,8 +18,3 @@ WHERE id = $1;
 UPDATE categories
 SET name = $1, color = $2, icon = $3, version = version + 1, updated_at = NOW()
 WHERE id = $4 AND version = $5;
-
--- name: InsertInitialCategory :exec
-INSERT INTO categories (name, color, icon)
-SELECT 'InitialBalance', '#FFF', 'icon'
-WHERE NOT EXISTS (SELECT 1 FROM categories);

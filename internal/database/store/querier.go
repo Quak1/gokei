@@ -32,7 +32,6 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	GetUserFromToken(ctx context.Context, arg GetUserFromTokenParams) (GetUserFromTokenRow, error)
-	InsertInitialCategory(ctx context.Context) error
 	UpdateAccountById(ctx context.Context, arg UpdateAccountByIdParams) (sql.Result, error)
 	UpdateBalance(ctx context.Context, arg UpdateBalanceParams) (int64, error)
 	UpdateCategoryById(ctx context.Context, arg UpdateCategoryByIdParams) (sql.Result, error)
