@@ -11,19 +11,25 @@ import (
 )
 
 const createCategory = `-- name: CreateCategory :one
-INSERT INTO categories (name, color, icon) 
-VALUES ($1, $2, $3)
-RETURNING id, created_at, updated_at, name, color, icon, version
+INSERT INTO categories (user_id, name, color, icon) 
+VALUES ($1, $2, $3, $4)
+RETURNING id, created_at, updated_at, name, color, icon, version, user_id
 `
 
 type CreateCategoryParams struct {
-	Name  string `json:"name"`
-	Color string `json:"color"`
-	Icon  string `json:"icon"`
+	UserID int32  `json:"user_id"`
+	Name   string `json:"name"`
+	Color  string `json:"color"`
+	Icon   string `json:"icon"`
 }
 
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error) {
-	row := q.db.QueryRowContext(ctx, createCategory, arg.Name, arg.Color, arg.Icon)
+	row := q.db.QueryRowContext(ctx, createCategory,
+		arg.UserID,
+		arg.Name,
+		arg.Color,
+		arg.Icon,
+	)
 	var i Category
 	err := row.Scan(
 		&i.ID,
@@ -33,25 +39,37 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 		&i.Color,
 		&i.Icon,
 		&i.Version,
+		&i.UserID,
 	)
 	return i, err
 }
 
 const deleteCategoryById = `-- name: DeleteCategoryById :execresult
 DELETE FROM categories
-WHERE id = $1
+WHERE id = $1 AND user_id = $2
 `
 
-func (q *Queries) DeleteCategoryById(ctx context.Context, id int32) (sql.Result, error) {
-	return q.db.ExecContext(ctx, deleteCategoryById, id)
+type DeleteCategoryByIdParams struct {
+	ID     int32 `json:"id"`
+	UserID int32 `json:"user_id"`
+}
+
+func (q *Queries) DeleteCategoryById(ctx context.Context, arg DeleteCategoryByIdParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteCategoryById, arg.ID, arg.UserID)
 }
 
 const getAllCategories = `-- name: GetAllCategories :many
-SELECT id, created_at, updated_at, name, color, icon, version FROM categories
+SELECT id, created_at, updated_at, name, color, icon, version, user_id FROM categories
+WHERE user_id = $1 OR user_id = $2
 `
 
-func (q *Queries) GetAllCategories(ctx context.Context) ([]Category, error) {
-	rows, err := q.db.QueryContext(ctx, getAllCategories)
+type GetAllCategoriesParams struct {
+	AdminID int32 `json:"admin_id"`
+	UserID  int32 `json:"user_id"`
+}
+
+func (q *Queries) GetAllCategories(ctx context.Context, arg GetAllCategoriesParams) ([]Category, error) {
+	rows, err := q.db.QueryContext(ctx, getAllCategories, arg.AdminID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +85,7 @@ func (q *Queries) GetAllCategories(ctx context.Context) ([]Category, error) {
 			&i.Color,
 			&i.Icon,
 			&i.Version,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}
@@ -82,12 +101,17 @@ func (q *Queries) GetAllCategories(ctx context.Context) ([]Category, error) {
 }
 
 const getCategoryByID = `-- name: GetCategoryByID :one
-SELECT id, created_at, updated_at, name, color, icon, version FROM categories
-WHERE id = $1
+SELECT id, created_at, updated_at, name, color, icon, version, user_id FROM categories
+WHERE id = $1 AND user_id = $2
 `
 
-func (q *Queries) GetCategoryByID(ctx context.Context, id int32) (Category, error) {
-	row := q.db.QueryRowContext(ctx, getCategoryByID, id)
+type GetCategoryByIDParams struct {
+	ID     int32 `json:"id"`
+	UserID int32 `json:"user_id"`
+}
+
+func (q *Queries) GetCategoryByID(ctx context.Context, arg GetCategoryByIDParams) (Category, error) {
+	row := q.db.QueryRowContext(ctx, getCategoryByID, arg.ID, arg.UserID)
 	var i Category
 	err := row.Scan(
 		&i.ID,
@@ -97,6 +121,33 @@ func (q *Queries) GetCategoryByID(ctx context.Context, id int32) (Category, erro
 		&i.Color,
 		&i.Icon,
 		&i.Version,
+		&i.UserID,
+	)
+	return i, err
+}
+
+const getCategoryByName = `-- name: GetCategoryByName :one
+SELECT id, created_at, updated_at, name, color, icon, version, user_id FROM categories
+WHERE name = $1 AND user_id = $2
+`
+
+type GetCategoryByNameParams struct {
+	Name   string `json:"name"`
+	UserID int32  `json:"user_id"`
+}
+
+func (q *Queries) GetCategoryByName(ctx context.Context, arg GetCategoryByNameParams) (Category, error) {
+	row := q.db.QueryRowContext(ctx, getCategoryByName, arg.Name, arg.UserID)
+	var i Category
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Color,
+		&i.Icon,
+		&i.Version,
+		&i.UserID,
 	)
 	return i, err
 }
@@ -104,7 +155,7 @@ func (q *Queries) GetCategoryByID(ctx context.Context, id int32) (Category, erro
 const updateCategoryById = `-- name: UpdateCategoryById :execresult
 UPDATE categories
 SET name = $1, color = $2, icon = $3, version = version + 1, updated_at = NOW()
-WHERE id = $4 AND version = $5
+WHERE id = $4 AND user_id = $5 AND version = $6
 `
 
 type UpdateCategoryByIdParams struct {
@@ -112,6 +163,7 @@ type UpdateCategoryByIdParams struct {
 	Color   string `json:"color"`
 	Icon    string `json:"icon"`
 	ID      int32  `json:"id"`
+	UserID  int32  `json:"user_id"`
 	Version int32  `json:"-"`
 }
 
@@ -121,6 +173,7 @@ func (q *Queries) UpdateCategoryById(ctx context.Context, arg UpdateCategoryById
 		arg.Color,
 		arg.Icon,
 		arg.ID,
+		arg.UserID,
 		arg.Version,
 	)
 }

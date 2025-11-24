@@ -72,6 +72,7 @@ type Category struct {
 	Color     string    `json:"color"`
 	Icon      string    `json:"icon"`
 	Version   int32     `json:"-"`
+	UserID    int32     `json:"user_id"`
 }
 
 type Token struct {

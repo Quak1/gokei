@@ -123,12 +123,16 @@ func createAdminUser(queries *store.QueriesWrapper) error {
 
 func createInitialCategory(queries *store.QueriesWrapper) error {
 	category := store.CreateCategoryParams{
-		Name:  "InitialBalance",
-		Color: "#123",
-		Icon:  "B",
+		Name:   "InitialBalance",
+		Color:  "#123",
+		Icon:   "B",
+		UserID: adminUserID,
 	}
 
-	initialCategory, err := queries.GetCategoryByID(context.Background(), 1)
+	initialCategory, err := queries.GetCategoryByName(context.Background(), store.GetCategoryByNameParams{
+		Name:   category.Name,
+		UserID: category.UserID,
+	})
 	if err == nil {
 		initialCategoryID = initialCategory.ID
 		return nil

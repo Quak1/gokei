@@ -12,16 +12,17 @@ type MockQuerierTx struct {
 	CreateTransactionFunc          func(ctx context.Context, arg CreateTransactionParams) (Transaction, error)
 	CreateUserFunc                 func(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteAccountByIdFunc          func(ctx context.Context, arg DeleteAccountByIdParams) (sql.Result, error)
-	DeleteCategoryByIdFunc         func(ctx context.Context, id int32) (sql.Result, error)
+	DeleteCategoryByIdFunc         func(ctx context.Context, arg DeleteCategoryByIdParams) (sql.Result, error)
 	DeleteTransactionByIDFunc      func(ctx context.Context, arg DeleteTransactionByIDParams) (sql.Result, error)
 	DeleteUserByIdFunc             func(ctx context.Context, id int32) (sql.Result, error)
 	GetAccountByIDFunc             func(ctx context.Context, arg GetAccountByIDParams) (Account, error)
 	GetAccountSumBalanceFunc       func(ctx context.Context, arg GetAccountSumBalanceParams) (GetAccountSumBalanceRow, error)
 	GetAllAccountsFunc             func(ctx context.Context) ([]Account, error)
-	GetAllCategoriesFunc           func(ctx context.Context) ([]Category, error)
+	GetAllCategoriesFunc           func(ctx context.Context, arg GetAllCategoriesParams) ([]Category, error)
 	GetAllTransactionsFunc         func(ctx context.Context, userID int32) ([]GetAllTransactionsRow, error)
 	GetAllUsersFunc                func(ctx context.Context) ([]User, error)
-	GetCategoryByIDFunc            func(ctx context.Context, id int32) (Category, error)
+	GetCategoryByIDFunc            func(ctx context.Context, arg GetCategoryByIDParams) (Category, error)
+	GetCategoryByNameFunc          func(ctx context.Context, arg GetCategoryByNameParams) (Category, error)
 	GetTransactionByIDFunc         func(ctx context.Context, arg GetTransactionByIDParams) (GetTransactionByIDRow, error)
 	GetTransactionsByAccountIDFunc func(ctx context.Context, arg GetTransactionsByAccountIDParams) ([]GetTransactionsByAccountIDRow, error)
 	GetUserAccountsFunc            func(ctx context.Context, userID int32) ([]Account, error)
@@ -104,23 +105,30 @@ func (m *MockQuerierTx) CreateCategory(ctx context.Context, arg CreateCategoryPa
 	return Category{}, nil
 }
 
-func (m *MockQuerierTx) GetAllCategories(ctx context.Context) ([]Category, error) {
+func (m *MockQuerierTx) GetAllCategories(ctx context.Context, arg GetAllCategoriesParams) ([]Category, error) {
 	if m.GetAllCategoriesFunc != nil {
-		return m.GetAllCategoriesFunc(ctx)
+		return m.GetAllCategoriesFunc(ctx, arg)
 	}
 	return []Category{}, nil
 }
 
-func (m *MockQuerierTx) GetCategoryByID(ctx context.Context, id int32) (Category, error) {
+func (m *MockQuerierTx) GetCategoryByID(ctx context.Context, arg GetCategoryByIDParams) (Category, error) {
 	if m.GetCategoryByIDFunc != nil {
-		return m.GetCategoryByIDFunc(ctx, id)
+		return m.GetCategoryByIDFunc(ctx, arg)
 	}
 	return Category{}, nil
 }
 
-func (m *MockQuerierTx) DeleteCategoryById(ctx context.Context, id int32) (sql.Result, error) {
+func (m *MockQuerierTx) GetCategoryByName(ctx context.Context, arg GetCategoryByNameParams) (Category, error) {
+	if m.GetCategoryByNameFunc != nil {
+		return m.GetCategoryByName(ctx, arg)
+	}
+	return Category{}, nil
+}
+
+func (m *MockQuerierTx) DeleteCategoryById(ctx context.Context, arg DeleteCategoryByIdParams) (sql.Result, error) {
 	if m.DeleteCategoryByIdFunc != nil {
-		return m.DeleteCategoryByIdFunc(ctx, id)
+		return m.DeleteCategoryByIdFunc(ctx, arg)
 	}
 	return NewMockResult(1), nil
 }
