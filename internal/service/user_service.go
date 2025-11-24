@@ -8,8 +8,8 @@ import (
 
 	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/database/store"
+	"github.com/Quak1/gokei/pkg/utils"
 	"github.com/Quak1/gokei/pkg/validator"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -40,15 +40,6 @@ func validateUser(v *validator.Validator, user *InputUser) {
 	validatePasswordPlaintext(v, user.Password)
 }
 
-func hashPassword(plaintextPassword string) ([]byte, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(plaintextPassword), 12)
-	if err != nil {
-		return nil, err
-	}
-
-	return hash, nil
-}
-
 type UserService struct {
 	queries store.QuerierTx
 }
@@ -71,7 +62,7 @@ func (s *UserService) Create(params *InputUser) (*store.User, error) {
 		return nil, v.GetErrors()
 	}
 
-	hash, err := hashPassword(params.Password)
+	hash, err := utils.HashPassword(params.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +160,7 @@ func (s *UserService) UpdateByID(id int32, updateParams *UpdateUserParams) (*sto
 	}
 
 	if updateParams.Password != nil {
-		hash, err := hashPassword(*updateParams.Password)
+		hash, err := utils.HashPassword(*updateParams.Password)
 		if err != nil {
 			return nil, err
 		}

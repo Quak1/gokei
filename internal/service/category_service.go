@@ -86,7 +86,7 @@ func (s *CategoryService) DeleteByID(id int32) error {
 	if id < 1 {
 		return database.ErrRecordNotFound
 	}
-	if id == database.InitialCategoryID {
+	if id == database.InitialCategoryID() {
 		return database.ErrUpdateInitialCategory
 	}
 
@@ -117,7 +117,7 @@ func (s *CategoryService) UpdateByID(id int32, updateParams *UpdateCategoryParam
 	if id < 1 {
 		return nil, database.ErrRecordNotFound
 	}
-	if id == database.InitialCategoryID {
+	if id == database.InitialCategoryID() {
 		return nil, database.ErrUpdateInitialCategory
 	}
 

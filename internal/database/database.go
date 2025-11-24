@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"os"
 	"path/filepath"
 
@@ -17,7 +18,16 @@ type DB struct {
 	Queries    store.QuerierTx
 }
 
-const InitialCategoryID int32 = 1
+var initialCategoryID int32 = 1
+var adminUserID int32 = 0
+
+func InitialCategoryID() int32 {
+	return initialCategoryID
+}
+
+func AdminUserID() int32 {
+	return adminUserID
+}
 
 func OpenDB(dsn string) (*DB, error) {
 	dbConnection, err := sql.Open("postgres", dsn)
@@ -31,13 +41,19 @@ func OpenDB(dsn string) (*DB, error) {
 		return nil, err
 	}
 
-	err = RunDBMigrations(dbConnection)
+	err = runDBMigrations(dbConnection)
 	if err != nil {
 		dbConnection.Close()
 		return nil, err
 	}
 
 	queries := store.NewQueriesWrapper(dbConnection)
+
+	err = createAdminUser(queries)
+	if err != nil {
+		dbConnection.Close()
+		return nil, err
+	}
 
 	err = queries.InsertInitialCategory(context.Background())
 	if err != nil {
@@ -53,7 +69,7 @@ func OpenDB(dsn string) (*DB, error) {
 	return db, nil
 }
 
-func RunDBMigrations(db *sql.DB) error {
+func runDBMigrations(db *sql.DB) error {
 	projectRoot, err := utils.FindProjectRoot()
 	if err != nil {
 		return err
@@ -71,6 +87,36 @@ func RunDBMigrations(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func createAdminUser(queries *store.QueriesWrapper) error {
+	user := store.CreateUserParams{
+		Username: "admin",
+		Name:     "admin",
+	}
+
+	adminUser, err := queries.GetUserByUsername(context.Background(), user.Username)
+	if err == nil {
+		adminUserID = adminUser.ID
+		return nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+
+	hash, err := utils.HashPassword("admin")
+	if err != nil {
+		return err
+	}
+	user.PasswordHash = hash
+
+	newUser, err := queries.CreateUser(context.Background(), user)
+	if err != nil {
+		return err
+	}
+
+	adminUserID = newUser.ID
 
 	return nil
 }

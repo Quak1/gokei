@@ -273,7 +273,7 @@ func (s *AccountService) TransferByID(userID, accountID int32, params *TransferP
 	sendTransaction, err := qtx.CreateTransaction(ctx, store.CreateTransactionParams{
 		AccountID:   senderAccount.ID,
 		AmountCents: -params.AmountCents,
-		CategoryID:  database.InitialCategoryID, // TODO use special category?
+		CategoryID:  database.InitialCategoryID(), // TODO use special category?
 		Title:       title,
 		Attachment:  "",
 		Note:        "",
@@ -294,7 +294,7 @@ func (s *AccountService) TransferByID(userID, accountID int32, params *TransferP
 	receiveTransaction, err := qtx.CreateTransaction(ctx, store.CreateTransactionParams{
 		AccountID:   recipientAccount.ID,
 		AmountCents: params.AmountCents,
-		CategoryID:  database.InitialCategoryID, // TODO
+		CategoryID:  database.InitialCategoryID(), // TODO
 		Title:       title,
 		Attachment:  "",
 		Note:        "",

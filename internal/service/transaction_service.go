@@ -60,7 +60,7 @@ func (s *TransactionService) GetAll(userID int32) ([]*store.Transaction, error) 
 }
 
 func (s *TransactionService) Create(userID int32, transactionParams *store.CreateTransactionParams) (*store.Transaction, error) {
-	if transactionParams.CategoryID == database.InitialCategoryID {
+	if transactionParams.CategoryID == database.InitialCategoryID() {
 		return nil, ErrTransactionWithInitialCategory
 	}
 	if transactionParams.CategoryID < 1 {
@@ -195,7 +195,7 @@ func (s *TransactionService) DeleteByID(transactionID, userID int32) error {
 	}
 
 	transaction := t.Transaction
-	if t.Transaction.CategoryID == database.InitialCategoryID {
+	if t.Transaction.CategoryID == database.InitialCategoryID() {
 		return ErrDeleteInitialTransaction
 	}
 
@@ -274,7 +274,7 @@ func (s *TransactionService) UpdateByID(transactionID, userID int32, updateParam
 		transaction.AccountID = *updateParams.AccountID
 	}
 	if updateParams.CategoryID != nil {
-		if *updateParams.CategoryID == database.InitialCategoryID {
+		if *updateParams.CategoryID == database.InitialCategoryID() {
 			return nil, ErrTransactionWithInitialCategory
 		}
 		transaction.CategoryID = *updateParams.CategoryID
@@ -393,7 +393,7 @@ func (s *TransactionService) RefundByID(transactionID, userID int32, params *Ref
 	}
 
 	transaction := t.Transaction
-	if t.Transaction.CategoryID == database.InitialCategoryID {
+	if t.Transaction.CategoryID == database.InitialCategoryID() {
 		return nil, ErrRefundInitialTransaction
 	}
 
