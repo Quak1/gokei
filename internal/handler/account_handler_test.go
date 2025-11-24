@@ -727,6 +727,15 @@ func TestAccountHandler_TransferByID(t *testing.T) {
 			expectedStatus: http.StatusUnprocessableEntity,
 		},
 		{
+			name: "Validation error - recipient id must be positive",
+			requestBody: map[string]any{
+				"amount":       1000,
+				"recipient_id": -1,
+			},
+			senderID:       accountID,
+			expectedStatus: http.StatusUnprocessableEntity,
+		},
+		{
 			name:           "Incorrect JSON",
 			requestBody:    "",
 			senderID:       accountID,

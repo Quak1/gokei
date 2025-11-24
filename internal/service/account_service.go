@@ -227,7 +227,8 @@ func (s *AccountService) TransferByID(userID, accountID int32, params *TransferP
 
 	v := validator.New()
 	v.Check(params.AmountCents > 0, "amount", "Transfer amount must be at least 1")
-	v.Check(accountID != params.RecipientID, "recipient_id", "Transfer account must be different to recipient account")
+	v.Check(params.RecipientID > 0, "recipient_id", "Must be provided")
+	v.Check(accountID != params.RecipientID, "recipient_id", "Recipient account must be different to transfer account")
 	if !v.Valid() {
 		return nil, v.GetErrors()
 	}

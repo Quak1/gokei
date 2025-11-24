@@ -33,6 +33,7 @@ func (app *application) routes(s *service.Service) http.Handler {
 	mux.Handle("GET /v1/accounts/{accountID}/transactions", mw.Authenticate(http.HandlerFunc(app.handler.Transaction.GetAccountTransactions)))
 	mux.Handle("PUT /v1/accounts/{accountID}", mw.Authenticate(http.HandlerFunc(app.handler.Account.UpdateByID)))
 	mux.Handle("DELETE /v1/accounts/{accountID}", mw.Authenticate(http.HandlerFunc(app.handler.Account.DeleteByID)))
+	mux.Handle("POST /v1/accounts/{accountID}/transfer", mw.Authenticate(http.HandlerFunc(app.handler.Account.TransferByID)))
 
 	mux.Handle("GET /v1/transactions", mw.Authenticate(http.HandlerFunc(app.handler.Transaction.GetAll)))
 	mux.Handle("POST /v1/transactions", mw.Authenticate(http.HandlerFunc(app.handler.Transaction.Create)))
