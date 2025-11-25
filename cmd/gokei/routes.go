@@ -20,11 +20,11 @@ func (app *application) routes(s *service.Service) http.Handler {
 
 	mux.HandleFunc("POST /v1/auth/login", app.handler.Auth.Login)
 
-	mux.HandleFunc("GET /v1/categories", app.handler.Category.GetAll)
-	mux.HandleFunc("POST /v1/categories", app.handler.Category.Create)
-	mux.HandleFunc("GET /v1/categories/{categoryID}", app.handler.Category.GetByID)
-	mux.HandleFunc("PUT /v1/categories/{categoryID}", app.handler.Category.UpdateByID)
-	mux.HandleFunc("DELETE /v1/categories/{categoryID}", app.handler.Category.DeleteByID)
+	mux.Handle("GET /v1/categories", mw.Authenticate(http.HandlerFunc(app.handler.Category.GetAll)))
+	mux.Handle("POST /v1/categories", mw.Authenticate(http.HandlerFunc(app.handler.Category.Create)))
+	mux.Handle("GET /v1/categories/{categoryID}", mw.Authenticate(http.HandlerFunc(app.handler.Category.GetByID)))
+	mux.Handle("PUT /v1/categories/{categoryID}", mw.Authenticate(http.HandlerFunc(app.handler.Category.UpdateByID)))
+	mux.Handle("DELETE /v1/categories/{categoryID}", mw.Authenticate(http.HandlerFunc(app.handler.Category.DeleteByID)))
 
 	mux.Handle("GET /v1/accounts", mw.Authenticate(http.HandlerFunc(app.handler.Account.GetAll)))
 	mux.Handle("POST /v1/accounts", mw.Authenticate(http.HandlerFunc(app.handler.Account.Create)))
