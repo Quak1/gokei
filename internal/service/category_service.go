@@ -28,13 +28,16 @@ func validateCategory(v *validator.Validator, category *store.Category) {
 	v.Check(validator.HexColor(category.Color), "color", "Must be valid Hex Color")
 
 	v.Check(validator.NonZero(category.Icon), "icon", "Must be provided")
+
+	v.Check(validator.NonZero(category.UserID), "user_id", "Must be provided")
 }
 
 func (s *CategoryService) Create(categoryParams *store.CreateCategoryParams) (*store.Category, error) {
 	category := &store.Category{
-		Name:  categoryParams.Name,
-		Color: categoryParams.Color,
-		Icon:  categoryParams.Icon,
+		UserID: categoryParams.UserID,
+		Name:   categoryParams.Name,
+		Color:  categoryParams.Color,
+		Icon:   categoryParams.Icon,
 	}
 
 	v := validator.New()
@@ -44,14 +47,17 @@ func (s *CategoryService) Create(categoryParams *store.CreateCategoryParams) (*s
 
 	data, err := s.queries.CreateCategory(context.Background(), *categoryParams)
 	if err != nil {
-		return nil, err
+		return nil, database.HandleForeignKeyError(err)
 	}
 
 	return &data, nil
 }
 
-func (s *CategoryService) GetAll() ([]*store.Category, error) {
-	data, err := s.queries.GetAllCategories(context.Background())
+func (s *CategoryService) GetAll(userID int32) ([]*store.Category, error) {
+	data, err := s.queries.GetAllCategories(context.Background(), store.GetAllCategoriesParams{
+		AdminID: database.AdminUserID(),
+		UserID:  userID,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -64,12 +70,15 @@ func (s *CategoryService) GetAll() ([]*store.Category, error) {
 	return categories, nil
 }
 
-func (s *CategoryService) GetByID(id int32) (*store.Category, error) {
-	if id < 1 {
+func (s *CategoryService) GetByID(userID, categoryID int32) (*store.Category, error) {
+	if userID < 1 || categoryID < 1 {
 		return nil, database.ErrRecordNotFound
 	}
 
-	category, err := s.queries.GetCategoryByID(context.Background(), id)
+	category, err := s.queries.GetCategoryByID(context.Background(), store.GetCategoryByIDParams{
+		ID:     categoryID,
+		UserID: userID,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -82,15 +91,18 @@ func (s *CategoryService) GetByID(id int32) (*store.Category, error) {
 	return &category, nil
 }
 
-func (s *CategoryService) DeleteByID(id int32) error {
-	if id < 1 {
+func (s *CategoryService) DeleteByID(userID, categoryID int32) error {
+	if userID < 1 || categoryID < 1 {
 		return database.ErrRecordNotFound
 	}
-	if id == database.InitialCategoryID() {
+	if categoryID == database.InitialCategoryID() {
 		return database.ErrUpdateInitialCategory
 	}
 
-	result, err := s.queries.DeleteCategoryById(context.Background(), id)
+	result, err := s.queries.DeleteCategoryById(context.Background(), store.DeleteCategoryByIdParams{
+		ID:     categoryID,
+		UserID: userID,
+	})
 	if err != nil {
 		return err
 	}
@@ -113,17 +125,20 @@ type UpdateCategoryParams struct {
 	Icon  *string `json:"icon"`
 }
 
-func (s *CategoryService) UpdateByID(id int32, updateParams *UpdateCategoryParams) (*store.Category, error) {
-	if id < 1 {
+func (s *CategoryService) UpdateByID(userId, categoryID int32, updateParams *UpdateCategoryParams) (*store.Category, error) {
+	if userId < 1 || categoryID < 1 {
 		return nil, database.ErrRecordNotFound
 	}
-	if id == database.InitialCategoryID() {
+	if categoryID == database.InitialCategoryID() {
 		return nil, database.ErrUpdateInitialCategory
 	}
 
 	ctx := context.Background()
 
-	category, err := s.queries.GetCategoryByID(ctx, id)
+	category, err := s.queries.GetCategoryByID(ctx, store.GetCategoryByIDParams{
+		ID:     categoryID,
+		UserID: userId,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -149,6 +164,7 @@ func (s *CategoryService) UpdateByID(id int32, updateParams *UpdateCategoryParam
 	}
 
 	result, err := s.queries.UpdateCategoryById(ctx, store.UpdateCategoryByIdParams{
+		UserID:  category.UserID,
 		Name:    category.Name,
 		Color:   category.Color,
 		Icon:    category.Icon,

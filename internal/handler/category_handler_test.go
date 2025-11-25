@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -15,7 +14,7 @@ import (
 	"github.com/Quak1/gokei/pkg/assert"
 )
 
-func setupTestCategoryHandler(t *testing.T) (*CategoryHandler, *service.CategoryService, func()) {
+func setupTestCategoryHandler(t *testing.T) (*CategoryHandler, *service.Service, func()) {
 	db, cleanup, err := testutils.NewTestDB()
 	if err != nil {
 		t.Fatalf("test db setup failed: %v", err)
@@ -24,7 +23,7 @@ func setupTestCategoryHandler(t *testing.T) (*CategoryHandler, *service.Category
 	svc := service.New(db)
 	handler := NewCategoryHandler(svc.Category)
 
-	return handler, svc.Category, cleanup
+	return handler, svc, cleanup
 }
 
 func TestCategoryHandler_Create(t *testing.T) {
@@ -34,8 +33,10 @@ func TestCategoryHandler_Create(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	handler, _, cleanup := setupTestCategoryHandler(t)
+	handler, svc, cleanup := setupTestCategoryHandler(t)
 	defer cleanup()
+
+	user := testutils.CreateTestUser(t, svc.User, "testuser")
 
 	route := "/v1/categories"
 
@@ -43,6 +44,7 @@ func TestCategoryHandler_Create(t *testing.T) {
 		name           string
 		requestBody    any
 		expectedStatus int
+		setupRequest   func(*testing.T) *http.Request
 		checkResponse  func(*testing.T, *http.Response)
 	}{
 		{
@@ -67,6 +69,24 @@ func TestCategoryHandler_Create(t *testing.T) {
 			expectedStatus: http.StatusCreated,
 		},
 		{
+			name: "Invalid user",
+			setupRequest: func(t *testing.T) *http.Request {
+				requestBody := map[string]any{
+					"name":  "Test Category",
+					"color": "#FFF",
+					"icon":  "T",
+				}
+
+				req := testutils.CreatePostRequest(t, route, requestBody, &store.User{
+					ID:       5,
+					Username: "Fake",
+				})
+
+				return req
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
 			name:           "Incorrect JSON",
 			requestBody:    "",
 			expectedStatus: http.StatusBadRequest,
@@ -82,13 +102,10 @@ func TestCategoryHandler_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			body, err := json.Marshal(tt.requestBody)
-			if err != nil {
-				t.Fatal(err)
+			req := testutils.CreatePostRequest(t, route, tt.requestBody, user)
+			if tt.setupRequest != nil {
+				req = tt.setupRequest(t)
 			}
-
-			req := httptest.NewRequest(http.MethodPost, route, bytes.NewBuffer(body))
-			req.Header.Set("Contenty-Type", "application/json")
 
 			rr := httptest.NewRecorder()
 			handler.Create(rr, req)
@@ -112,14 +129,16 @@ func TestCategoryHandler_GetAll(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	handler, _, cleanup := setupTestCategoryHandler(t)
+	handler, svc, cleanup := setupTestCategoryHandler(t)
 	defer cleanup()
 
 	route := "/v1/categories"
+	user := testutils.CreateTestUser(t, svc.User, "testuser")
 
 	tests := []struct {
 		name           string
 		expectedStatus int
+		setup          func(*testing.T)
 		checkResponse  func(*testing.T, *http.Response)
 	}{
 		{
@@ -133,11 +152,26 @@ func TestCategoryHandler_GetAll(t *testing.T) {
 				assert.Equal(t, len(categories), 1)
 			},
 		},
+		{
+			name:           "Only get own categories",
+			expectedStatus: http.StatusOK,
+			setup: func(t *testing.T) {
+				user2 := testutils.CreateTestUser(t, svc.User, "testuser")
+				testutils.CreateTestCategory(t, svc.Category, user2.ID)
+			},
+			checkResponse: func(t *testing.T, rs *http.Response) {
+				var resBody map[string][]*store.Category
+				json.NewDecoder(rs.Body).Decode(&resBody)
+
+				categories := resBody["categories"]
+				assert.Equal(t, len(categories), 1)
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, route, nil)
+			req := testutils.CreateGetRequest(t, route, user)
 
 			rr := httptest.NewRecorder()
 			handler.GetAll(rr, req)
@@ -161,8 +195,12 @@ func TestCategoryHandler_GetByID(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	handler, _, cleanup := setupTestCategoryHandler(t)
+	handler, svc, cleanup := setupTestCategoryHandler(t)
 	defer cleanup()
+
+	user := testutils.CreateTestUser(t, svc.User, "testuser")
+	category := testutils.CreateTestCategory(t, svc.Category, user.ID)
+	categoryID := strconv.Itoa(int(category.ID))
 
 	route := "/v1/categories"
 	idPath := "categoryID"
@@ -176,8 +214,23 @@ func TestCategoryHandler_GetByID(t *testing.T) {
 	}{
 		{
 			name:           "Get category",
-			id:             "1",
+			id:             categoryID,
 			expectedStatus: http.StatusOK,
+		},
+		{
+			name: "Fail to get other user category",
+			id:   categoryID,
+			setupRequest: func(t *testing.T) *http.Request {
+				user2 := testutils.CreateTestUser(t, svc.User, "testuser2")
+				category2 := testutils.CreateTestCategory(t, svc.Category, user2.ID)
+
+				req := testutils.CreateGetRequest(t, route, user)
+				req.SetPathValue(idPath, strconv.Itoa(int(category2.ID)))
+
+				return req
+			},
+
+			expectedStatus: http.StatusNotFound,
 		},
 		{
 			name:           "Not found",
@@ -203,8 +256,9 @@ func TestCategoryHandler_GetByID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, route, nil)
+			req := testutils.CreateGetRequest(t, route, user)
 			req.SetPathValue(idPath, tt.id)
+
 			if tt.setupRequest != nil {
 				req = tt.setupRequest(t)
 			}
@@ -234,7 +288,13 @@ func TestCategoryHandler_DeleteByID(t *testing.T) {
 	handler, svc, cleanup := setupTestCategoryHandler(t)
 	defer cleanup()
 
-	category, err := svc.Create(&store.CreateCategoryParams{Name: "Test", Color: "#123", Icon: "T"})
+	user := testutils.CreateTestUser(t, svc.User, "testuser")
+	category, err := svc.Category.Create(&store.CreateCategoryParams{
+		UserID: user.ID,
+		Name:   "Test",
+		Color:  "#123",
+		Icon:   "T",
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -247,12 +307,26 @@ func TestCategoryHandler_DeleteByID(t *testing.T) {
 		name           string
 		id             string
 		expectedStatus int
+		setup          func(*testing.T) *http.Request
 		checkResponse  func(*testing.T, *http.Response)
 	}{
 		{
 			name:           "Delete category",
 			id:             categoryID,
 			expectedStatus: http.StatusOK,
+		},
+		{
+			name: "Fail to delete other user's category",
+			setup: func(t *testing.T) *http.Request {
+				user2 := testutils.CreateTestUser(t, svc.User, "testuser2")
+				category2 := testutils.CreateTestCategory(t, svc.Category, user2.ID)
+
+				req := testutils.CreateGetRequest(t, route, user)
+				req.SetPathValue(idPath, strconv.Itoa(int(category2.ID)))
+
+				return req
+			},
+			expectedStatus: http.StatusNotFound,
 		},
 		{
 			name:           "Fail to delete initial category",
@@ -283,8 +357,12 @@ func TestCategoryHandler_DeleteByID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, route, nil)
+			req := testutils.CreateGetRequest(t, route, user)
 			req.SetPathValue(idPath, tt.id)
+
+			if tt.setup != nil {
+				req = tt.setup(t)
+			}
 
 			rr := httptest.NewRecorder()
 			handler.DeleteByID(rr, req)
@@ -311,7 +389,13 @@ func TestCategoryHandler_UpdateByID(t *testing.T) {
 	handler, svc, cleanup := setupTestCategoryHandler(t)
 	defer cleanup()
 
-	category, err := svc.Create(&store.CreateCategoryParams{Name: "Test", Color: "#123", Icon: "T"})
+	user := testutils.CreateTestUser(t, svc.User, "testuser")
+	category, err := svc.Category.Create(&store.CreateCategoryParams{
+		UserID: user.ID,
+		Name:   "Test",
+		Color:  "#123",
+		Icon:   "T",
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -325,6 +409,7 @@ func TestCategoryHandler_UpdateByID(t *testing.T) {
 		id             string
 		requestBody    any
 		expectedStatus int
+		setup          func(*testing.T) *http.Request
 		checkResponse  func(*testing.T, *http.Response)
 	}{
 		{
@@ -362,6 +447,23 @@ func TestCategoryHandler_UpdateByID(t *testing.T) {
 				assert.Equal(t, category.Icon, "U")
 			},
 			expectedStatus: http.StatusOK,
+		},
+		{
+			name: "Fail to update other user's category",
+			setup: func(t *testing.T) *http.Request {
+				requestBody := map[string]any{
+					"color": "#123456",
+				}
+
+				user2 := testutils.CreateTestUser(t, svc.User, "testuser2")
+				category2 := testutils.CreateTestCategory(t, svc.Category, user2.ID)
+
+				req := testutils.CreatePostRequest(t, route, requestBody, user)
+				req.SetPathValue(idPath, strconv.Itoa(int(category2.ID)))
+
+				return req
+			},
+			expectedStatus: http.StatusNotFound,
 		},
 		{
 			name: "Fail to update initial category",
@@ -413,14 +515,12 @@ func TestCategoryHandler_UpdateByID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			body, err := json.Marshal(tt.requestBody)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			req := httptest.NewRequest(http.MethodPost, route, bytes.NewBuffer(body))
-			req.Header.Set("Contenty-Type", "application/json")
+			req := testutils.CreatePostRequest(t, route, tt.requestBody, user)
 			req.SetPathValue(idPath, tt.id)
+
+			if tt.setup != nil {
+				req = tt.setup(t)
+			}
 
 			rr := httptest.NewRecorder()
 			handler.UpdateByID(rr, req)

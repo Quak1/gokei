@@ -39,7 +39,7 @@ func TestTransactionHandler_Create(t *testing.T) {
 
 	user := testutils.CreateTestUser(t, svc.User, "testuser")
 	account := testutils.CreateTestAccount(t, svc.Account, user.ID)
-	category := testutils.CreateTestCategory(t, svc.Category)
+	category := testutils.CreateTestCategory(t, svc.Category, user.ID)
 	route := "/v1/transactions"
 
 	tests := []struct {
@@ -65,7 +65,8 @@ func TestTransactionHandler_Create(t *testing.T) {
 				transaction := resBody["transaction"]
 				assert.Equal(t, transaction.Title, "Test Transaction")
 				assert.Equal(t, transaction.AmountCents, 10000)
-				assert.Equal(t, transaction.AccountID, user.ID)
+				assert.Equal(t, transaction.AccountID, account.ID)
+				assert.Equal(t, transaction.CategoryID, category.ID)
 
 				location := r.Header.Get("Location")
 				assert.Equal(t, location, fmt.Sprintf("%s/%d", route, transaction.ID))
@@ -177,7 +178,7 @@ func TestTransactionHandler_GetAll(t *testing.T) {
 
 	user := testutils.CreateTestUser(t, svc.User, "testuser")
 	account := testutils.CreateTestAccount(t, svc.Account, user.ID)
-	category := testutils.CreateTestCategory(t, svc.Category)
+	category := testutils.CreateTestCategory(t, svc.Category, user.ID)
 	route := "/v1/transactions"
 
 	tests := []struct {
@@ -253,7 +254,7 @@ func TestTransactionHandler_GetAccountTransactions(t *testing.T) {
 
 	user := testutils.CreateTestUser(t, svc.User, "testuser")
 	account := testutils.CreateTestAccount(t, svc.Account, user.ID)
-	category := testutils.CreateTestCategory(t, svc.Category)
+	category := testutils.CreateTestCategory(t, svc.Category, user.ID)
 	route := "/v1/transactions"
 
 	tests := []struct {
@@ -349,7 +350,7 @@ func TestTransactionHandler_GetByID(t *testing.T) {
 
 	user := testutils.CreateTestUser(t, svc.User, "testuser")
 	account := testutils.CreateTestAccount(t, svc.Account, user.ID)
-	category := testutils.CreateTestCategory(t, svc.Category)
+	category := testutils.CreateTestCategory(t, svc.Category, user.ID)
 	route := "/v1/transactions"
 
 	tests := []struct {
@@ -444,7 +445,7 @@ func TestTransactionHandler_DeleteByID(t *testing.T) {
 
 	user := testutils.CreateTestUser(t, svc.User, "testuser")
 	account := testutils.CreateTestAccount(t, svc.Account, user.ID)
-	category := testutils.CreateTestCategory(t, svc.Category)
+	category := testutils.CreateTestCategory(t, svc.Category, user.ID)
 	route := "/v1/transactions"
 
 	tests := []struct {
@@ -559,7 +560,7 @@ func TestTransactionHandler_UpdateByID(t *testing.T) {
 
 	user := testutils.CreateTestUser(t, svc.User, "testuser")
 	account := testutils.CreateTestAccount(t, svc.Account, user.ID)
-	category := testutils.CreateTestCategory(t, svc.Category)
+	category := testutils.CreateTestCategory(t, svc.Category, user.ID)
 	transaction := testutils.CreateTestTransaction(t, svc.Transaction, user.ID, account.ID, category.ID)
 	transactionID := strconv.Itoa(int(transaction.ID))
 	route := "/v1/transactions"
@@ -612,7 +613,7 @@ func TestTransactionHandler_UpdateByID(t *testing.T) {
 			expectedStatus: http.StatusOK,
 			setup: func(t *testing.T) int32 {
 				testutils.CreateTestAccount(t, svc.Account, user.ID)
-				testutils.CreateTestCategory(t, svc.Category)
+				testutils.CreateTestCategory(t, svc.Category, user.ID)
 				return transaction.ID
 			},
 			validate: func(t *testing.T, r *http.Response) {
@@ -747,7 +748,7 @@ func TestTransactionHandler_RefundByID(t *testing.T) {
 
 	user := testutils.CreateTestUser(t, svc.User, "testuser")
 	account := testutils.CreateTestAccount(t, svc.Account, user.ID)
-	category := testutils.CreateTestCategory(t, svc.Category)
+	category := testutils.CreateTestCategory(t, svc.Category, user.ID)
 	transaction := testutils.CreateTestTransaction(t, svc.Transaction, user.ID, account.ID, category.ID)
 	transactionID := strconv.Itoa(int(transaction.ID))
 

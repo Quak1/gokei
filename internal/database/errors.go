@@ -10,9 +10,10 @@ import (
 var (
 	ErrRecordNotFound        = errors.New("record not found")
 	ErrEditConflict          = errors.New("edit conflict")
-	ErrInvalidCategory       = errors.New("This category does not exist")
 	ErrUpdateInitialCategory = errors.New("Can't update initial category")
+	ErrInvalidCategory       = errors.New("This category does not exist")
 	ErrInvalidAccount        = errors.New("This account does not exist")
+	ErrInvalidUser           = errors.New("This user does not exist")
 )
 
 func HandleForeignKeyError(err error) error {
@@ -23,6 +24,8 @@ func HandleForeignKeyError(err error) error {
 				return ErrInvalidCategory
 			case "transactions_account_id_fkey":
 				return ErrInvalidAccount
+			case "categories_user_id_fkey":
+				return ErrInvalidUser
 			default:
 				return fmt.Errorf("reference does not exist: %s", pqErr.Constraint)
 			}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Quak1/gokei/internal/appcontext"
 	"github.com/Quak1/gokei/internal/database"
 	"github.com/Quak1/gokei/internal/database/store"
 	"github.com/Quak1/gokei/internal/service"
@@ -23,7 +24,11 @@ func NewCategoryHandler(svc *service.CategoryService) *CategoryHandler {
 }
 
 func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var input store.CreateCategoryParams
+	var input struct {
+		Name  string `json:"name"`
+		Color string `json:"color"`
+		Icon  string `json:"icon"`
+	}
 
 	err := response.ReadJSON(w, r, &input)
 	if err != nil {
@@ -31,13 +36,24 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	category, err := h.categoryService.Create(&input)
+	ctxUser := appcontext.GetContextUser(r)
+
+	params := store.CreateCategoryParams{
+		UserID: ctxUser.ID,
+		Name:   input.Name,
+		Color:  input.Color,
+		Icon:   input.Icon,
+	}
+
+	category, err := h.categoryService.Create(&params)
 	if err != nil {
 		var validationErr *validator.ValidationError
 
 		switch {
 		case errors.As(err, &validationErr):
 			response.FailedValidationResponse(w, r, validationErr)
+		case errors.Is(err, database.ErrInvalidUser):
+			response.NotFoundResponse(w, r)
 		default:
 			response.ServerErrorResponse(w, r, err)
 		}
@@ -55,7 +71,9 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CategoryHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	categories, err := h.categoryService.GetAll()
+	ctxUser := appcontext.GetContextUser(r)
+
+	categories, err := h.categoryService.GetAll(ctxUser.ID)
 	if err != nil {
 		response.ServerErrorResponse(w, r, err)
 	}
@@ -67,13 +85,15 @@ func (h *CategoryHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CategoryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	id, err := readIntParam(r, "categoryID")
+	categoryID, err := readIntParam(r, "categoryID")
 	if err != nil {
 		response.BadRequestResponseGeneric(w, r)
 		return
 	}
 
-	category, err := h.categoryService.GetByID(int32(id))
+	ctxUser := appcontext.GetContextUser(r)
+
+	category, err := h.categoryService.GetByID(ctxUser.ID, int32(categoryID))
 	if err != nil {
 		switch {
 		case errors.Is(err, database.ErrRecordNotFound):
@@ -91,13 +111,15 @@ func (h *CategoryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CategoryHandler) DeleteByID(w http.ResponseWriter, r *http.Request) {
-	id, err := readIntParam(r, "categoryID")
+	categoryID, err := readIntParam(r, "categoryID")
 	if err != nil {
 		response.BadRequestResponseGeneric(w, r)
 		return
 	}
 
-	err = h.categoryService.DeleteByID(int32(id))
+	ctxUser := appcontext.GetContextUser(r)
+
+	err = h.categoryService.DeleteByID(ctxUser.ID, int32(categoryID))
 	if err != nil {
 		switch {
 		case errors.Is(err, database.ErrRecordNotFound):
@@ -117,7 +139,7 @@ func (h *CategoryHandler) DeleteByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CategoryHandler) UpdateByID(w http.ResponseWriter, r *http.Request) {
-	id, err := readIntParam(r, "categoryID")
+	categoryID, err := readIntParam(r, "categoryID")
 	if err != nil {
 		response.BadRequestResponseGeneric(w, r)
 		return
@@ -130,7 +152,9 @@ func (h *CategoryHandler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	category, err := h.categoryService.UpdateByID(int32(id), &input)
+	ctxUser := appcontext.GetContextUser(r)
+
+	category, err := h.categoryService.UpdateByID(ctxUser.ID, int32(categoryID), &input)
 	if err != nil {
 		var validationErr *validator.ValidationError
 		switch {
