@@ -6,6 +6,7 @@ import (
 )
 
 type MockQuerierTx struct {
+	AutoUpdateBalanceFunc          func(ctx context.Context, arg AutoUpdateBalanceParams) (int64, error)
 	CreateAccountFunc              func(ctx context.Context, arg CreateAccountParams) (Account, error)
 	CreateCategoryFunc             func(ctx context.Context, arg CreateCategoryParams) (Category, error)
 	CreateTokenFunc                func(ctx context.Context, arg CreateTokenParams) (Token, error)
@@ -149,6 +150,13 @@ func (m *MockQuerierTx) CreateToken(ctx context.Context, arg CreateTokenParams) 
 }
 
 // Transaction queries
+func (m *MockQuerierTx) AutoUpdateBalance(ctx context.Context, arg AutoUpdateBalanceParams) (int64, error) {
+	if m.AutoUpdateBalanceFunc != nil {
+		return m.AutoUpdateBalanceFunc(ctx, arg)
+	}
+	return 0, nil
+}
+
 func (m *MockQuerierTx) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
 	if m.CreateTransactionFunc != nil {
 		return m.CreateTransactionFunc(ctx, arg)

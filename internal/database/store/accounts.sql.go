@@ -10,6 +10,33 @@ import (
 	"database/sql"
 )
 
+const autoUpdateBalance = `-- name: AutoUpdateBalance :execrows
+WITH new_balance AS (
+  SELECT accounts.id, SUM(transactions.amount_cents) AS balance
+  FROM accounts
+  LEFT JOIN transactions ON transactions.account_id = accounts.id
+  WHERE accounts.id = $1 AND accounts.user_id = $2
+  GROUP BY accounts.id
+)
+UPDATE accounts
+SET balance_cents = new_balance.balance, updated_at = NOW()
+FROM new_balance
+WHERE accounts.id = $1 AND accounts.user_id = $2
+`
+
+type AutoUpdateBalanceParams struct {
+	ID     int32 `json:"id"`
+	UserID int32 `json:"user_id"`
+}
+
+func (q *Queries) AutoUpdateBalance(ctx context.Context, arg AutoUpdateBalanceParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, autoUpdateBalance, arg.ID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO accounts (type, name, user_id, balance_cents) 
 VALUES ($1, $2, $3, $4)

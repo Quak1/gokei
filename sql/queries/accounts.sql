@@ -35,3 +35,16 @@ GROUP BY accounts.id;
 UPDATE accounts
 SET name = $1, type = $2, version = version + 1, updated_at = NOW()
 WHERE id = $3 AND user_id = $4 AND version = $5;
+
+-- name: AutoUpdateBalance :execrows
+WITH new_balance AS (
+  SELECT accounts.id, SUM(transactions.amount_cents) AS balance
+  FROM accounts
+  LEFT JOIN transactions ON transactions.account_id = accounts.id
+  WHERE accounts.id = $1 AND accounts.user_id = $2
+  GROUP BY accounts.id
+)
+UPDATE accounts
+SET balance_cents = new_balance.balance, updated_at = NOW()
+FROM new_balance
+WHERE accounts.id = $1 AND accounts.user_id = $2;

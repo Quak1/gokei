@@ -10,6 +10,7 @@ import (
 )
 
 type Querier interface {
+	AutoUpdateBalance(ctx context.Context, arg AutoUpdateBalanceParams) (int64, error)
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error)
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error)
 	CreateToken(ctx context.Context, arg CreateTokenParams) (Token, error)

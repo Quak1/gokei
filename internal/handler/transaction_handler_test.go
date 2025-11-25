@@ -476,6 +476,13 @@ func TestTransactionHandler_DeleteByID(t *testing.T) {
 				}
 
 				assert.Equal(t, len(transactions), 1)
+
+				updatedAccount, err := svc.Account.GetByID(account.ID, user.ID)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				assert.Equal(t, updatedAccount.BalanceCents, account.BalanceCents)
 			},
 		},
 		{

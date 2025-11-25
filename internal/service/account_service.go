@@ -273,7 +273,7 @@ func (s *AccountService) TransferByID(userID, accountID int32, params *TransferP
 	sendTransaction, err := qtx.CreateTransaction(ctx, store.CreateTransactionParams{
 		AccountID:   senderAccount.ID,
 		AmountCents: -params.AmountCents,
-		CategoryID:  database.InitialCategoryID(), // TODO use special category?
+		CategoryID:  database.InitialCategoryID(),
 		Title:       title,
 		Attachment:  "",
 		Note:        "",
@@ -282,10 +282,9 @@ func (s *AccountService) TransferByID(userID, accountID int32, params *TransferP
 		return nil, err
 	}
 
-	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
-		BalanceCents: sendTransaction.AmountCents,
-		ID:           sendTransaction.AccountID,
-		UserID:       userID,
+	_, err = qtx.AutoUpdateBalance(ctx, store.AutoUpdateBalanceParams{
+		ID:     sendTransaction.AccountID,
+		UserID: userID,
 	})
 	if err != nil {
 		return nil, err
@@ -294,7 +293,7 @@ func (s *AccountService) TransferByID(userID, accountID int32, params *TransferP
 	receiveTransaction, err := qtx.CreateTransaction(ctx, store.CreateTransactionParams{
 		AccountID:   recipientAccount.ID,
 		AmountCents: params.AmountCents,
-		CategoryID:  database.InitialCategoryID(), // TODO
+		CategoryID:  database.InitialCategoryID(),
 		Title:       title,
 		Attachment:  "",
 		Note:        "",
@@ -303,10 +302,9 @@ func (s *AccountService) TransferByID(userID, accountID int32, params *TransferP
 		return nil, err
 	}
 
-	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
-		BalanceCents: receiveTransaction.AmountCents,
-		ID:           receiveTransaction.AccountID,
-		UserID:       userID,
+	_, err = qtx.AutoUpdateBalance(ctx, store.AutoUpdateBalanceParams{
+		ID:     receiveTransaction.AccountID,
+		UserID: userID,
 	})
 	if err != nil {
 		return nil, err

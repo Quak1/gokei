@@ -108,10 +108,9 @@ func (s *TransactionService) Create(userID int32, transactionParams *store.Creat
 		return nil, database.HandleForeignKeyError(err)
 	}
 
-	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
-		ID:           transaction.AccountID,
-		BalanceCents: transaction.AmountCents,
-		UserID:       userID,
+	_, err = qtx.AutoUpdateBalance(ctx, store.AutoUpdateBalanceParams{
+		ID:     transaction.AccountID,
+		UserID: userID,
 	})
 	if err != nil {
 		return nil, err
@@ -208,10 +207,9 @@ func (s *TransactionService) DeleteByID(transactionID, userID int32) error {
 		return err
 	}
 
-	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
-		ID:           transaction.AccountID,
-		BalanceCents: -transaction.AmountCents,
-		UserID:       userID,
+	_, err = qtx.AutoUpdateBalance(ctx, store.AutoUpdateBalanceParams{
+		ID:     transaction.AccountID,
+		UserID: userID,
 	})
 	if err != nil {
 		return err
@@ -263,8 +261,6 @@ func (s *TransactionService) UpdateByID(transactionID, userID int32, updateParam
 	}
 
 	transaction := t.Transaction
-
-	oldAmount := transaction.AmountCents
 	oldAccountID := transaction.AccountID
 
 	if updateParams.AmountCents != nil {
@@ -335,19 +331,17 @@ func (s *TransactionService) UpdateByID(transactionID, userID int32, updateParam
 		return nil, database.ErrEditConflict
 	}
 
-	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
-		ID:           oldAccountID,
-		BalanceCents: -oldAmount,
-		UserID:       userID,
+	_, err = qtx.AutoUpdateBalance(ctx, store.AutoUpdateBalanceParams{
+		ID:     oldAccountID,
+		UserID: userID,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
-		ID:           transaction.AccountID,
-		BalanceCents: transaction.AmountCents,
-		UserID:       userID,
+	_, err = qtx.AutoUpdateBalance(ctx, store.AutoUpdateBalanceParams{
+		ID:     transaction.AccountID,
+		UserID: userID,
 	})
 	if err != nil {
 		return nil, err
@@ -409,10 +403,9 @@ func (s *TransactionService) RefundByID(transactionID, userID int32, params *Ref
 		return nil, err
 	}
 
-	_, err = qtx.UpdateBalance(ctx, store.UpdateBalanceParams{
-		ID:           refundTransaction.AccountID,
-		BalanceCents: refundTransaction.AmountCents,
-		UserID:       userID,
+	_, err = qtx.AutoUpdateBalance(ctx, store.AutoUpdateBalanceParams{
+		ID:     refundTransaction.AccountID,
+		UserID: userID,
 	})
 	if err != nil {
 		return nil, err
