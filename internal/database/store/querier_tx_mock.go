@@ -6,35 +6,45 @@ import (
 )
 
 type MockQuerierTx struct {
-	AutoUpdateBalanceFunc          func(ctx context.Context, arg AutoUpdateBalanceParams) (int64, error)
-	CreateAccountFunc              func(ctx context.Context, arg CreateAccountParams) (Account, error)
-	CreateCategoryFunc             func(ctx context.Context, arg CreateCategoryParams) (Category, error)
-	CreateTokenFunc                func(ctx context.Context, arg CreateTokenParams) (Token, error)
-	CreateTransactionFunc          func(ctx context.Context, arg CreateTransactionParams) (Transaction, error)
-	CreateUserFunc                 func(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteAccountByIdFunc          func(ctx context.Context, arg DeleteAccountByIdParams) (sql.Result, error)
-	DeleteCategoryByIdFunc         func(ctx context.Context, arg DeleteCategoryByIdParams) (sql.Result, error)
-	DeleteTransactionByIDFunc      func(ctx context.Context, arg DeleteTransactionByIDParams) (sql.Result, error)
-	DeleteUserByIdFunc             func(ctx context.Context, id int32) (sql.Result, error)
-	GetAccountByIDFunc             func(ctx context.Context, arg GetAccountByIDParams) (Account, error)
-	GetAccountSumBalanceFunc       func(ctx context.Context, arg GetAccountSumBalanceParams) (GetAccountSumBalanceRow, error)
-	GetAllAccountsFunc             func(ctx context.Context) ([]Account, error)
-	GetAllCategoriesFunc           func(ctx context.Context, arg GetAllCategoriesParams) ([]Category, error)
-	GetAllTransactionsFunc         func(ctx context.Context, userID int32) ([]GetAllTransactionsRow, error)
-	GetAllUsersFunc                func(ctx context.Context) ([]User, error)
-	GetCategoryByIDFunc            func(ctx context.Context, arg GetCategoryByIDParams) (Category, error)
-	GetCategoryByNameFunc          func(ctx context.Context, arg GetCategoryByNameParams) (Category, error)
-	GetTransactionByIDFunc         func(ctx context.Context, arg GetTransactionByIDParams) (GetTransactionByIDRow, error)
-	GetTransactionsByAccountIDFunc func(ctx context.Context, arg GetTransactionsByAccountIDParams) ([]GetTransactionsByAccountIDRow, error)
-	GetUserAccountsFunc            func(ctx context.Context, userID int32) ([]Account, error)
-	GetUserByIDFunc                func(ctx context.Context, id int32) (User, error)
-	GetUserByUsernameFunc          func(ctx context.Context, username string) (User, error)
-	GetUserFromTokenFunc           func(ctx context.Context, arg GetUserFromTokenParams) (GetUserFromTokenRow, error)
-	UpdateAccountByIdFunc          func(ctx context.Context, arg UpdateAccountByIdParams) (sql.Result, error)
-	UpdateBalanceFunc              func(ctx context.Context, arg UpdateBalanceParams) (int64, error)
-	UpdateCategoryByIdFunc         func(ctx context.Context, arg UpdateCategoryByIdParams) (sql.Result, error)
-	UpdateTransactionByIdFunc      func(ctx context.Context, arg UpdateTransactionByIdParams) (sql.Result, error)
-	UpdateUserByIdFunc             func(ctx context.Context, arg UpdateUserByIdParams) (sql.Result, error)
+	AutoUpdateBalanceFunc              func(ctx context.Context, arg AutoUpdateBalanceParams) (int64, error)
+	CreateAccountFunc                  func(ctx context.Context, arg CreateAccountParams) (Account, error)
+	CreateCategoryFunc                 func(ctx context.Context, arg CreateCategoryParams) (Category, error)
+	CreateOccurrenceFunc               func(ctx context.Context, arg CreateOccurrenceParams) (RecurringTransactionOccurrence, error)
+	CreateRecurringTransactionFunc     func(ctx context.Context, arg CreateRecurringTransactionParams) (RecurringTransaction, error)
+	CreateTokenFunc                    func(ctx context.Context, arg CreateTokenParams) (Token, error)
+	CreateTransactionFunc              func(ctx context.Context, arg CreateTransactionParams) (Transaction, error)
+	CreateUserFunc                     func(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteAccountByIdFunc              func(ctx context.Context, arg DeleteAccountByIdParams) (sql.Result, error)
+	DeleteCategoryByIdFunc             func(ctx context.Context, arg DeleteCategoryByIdParams) (sql.Result, error)
+	DeleteRecurringTransactionFunc     func(ctx context.Context, arg DeleteRecurringTransactionParams) (sql.Result, error)
+	DeleteTransactionByIDFunc          func(ctx context.Context, arg DeleteTransactionByIDParams) (sql.Result, error)
+	DeleteUserByIdFunc                 func(ctx context.Context, id int32) (sql.Result, error)
+	GetAccountByIDFunc                 func(ctx context.Context, arg GetAccountByIDParams) (Account, error)
+	GetAccountSumBalanceFunc           func(ctx context.Context, arg GetAccountSumBalanceParams) (GetAccountSumBalanceRow, error)
+	GetActiveRecurringTransactionsFunc func(ctx context.Context, arg GetActiveRecurringTransactionsParams) ([]RecurringTransaction, error)
+	GetAllAccountsFunc                 func(ctx context.Context) ([]Account, error)
+	GetAllCategoriesFunc               func(ctx context.Context, arg GetAllCategoriesParams) ([]Category, error)
+	GetAllTransactionsFunc             func(ctx context.Context, userID int32) ([]GetAllTransactionsRow, error)
+	GetAllUsersFunc                    func(ctx context.Context) ([]User, error)
+	GetCategoryByIDFunc                func(ctx context.Context, arg GetCategoryByIDParams) (Category, error)
+	GetCategoryByNameFunc              func(ctx context.Context, arg GetCategoryByNameParams) (Category, error)
+	GetLastOccurrenceFunc              func(ctx context.Context, recurringTransactionID int32) (RecurringTransactionOccurrence, error)
+	GetOccurrenceForDateFunc           func(ctx context.Context, arg GetOccurrenceForDateParams) (RecurringTransactionOccurrence, error)
+	GetOccurrencesFunc                 func(ctx context.Context, recurringTransactionID int32) ([]RecurringTransactionOccurrence, error)
+	GetRecurringTransactionByIDFunc    func(ctx context.Context, arg GetRecurringTransactionByIDParams) (RecurringTransaction, error)
+	GetTransactionByIDFunc             func(ctx context.Context, arg GetTransactionByIDParams) (GetTransactionByIDRow, error)
+	GetTransactionsByAccountIDFunc     func(ctx context.Context, arg GetTransactionsByAccountIDParams) ([]GetTransactionsByAccountIDRow, error)
+	GetUserAccountsFunc                func(ctx context.Context, userID int32) ([]Account, error)
+	GetUserByIDFunc                    func(ctx context.Context, id int32) (User, error)
+	GetUserByUsernameFunc              func(ctx context.Context, username string) (User, error)
+	GetUserFromTokenFunc               func(ctx context.Context, arg GetUserFromTokenParams) (GetUserFromTokenRow, error)
+	GetUserRecurringTransactionsFunc   func(ctx context.Context, userID int32) ([]RecurringTransaction, error)
+	UpdateAccountByIdFunc              func(ctx context.Context, arg UpdateAccountByIdParams) (sql.Result, error)
+	UpdateBalanceFunc                  func(ctx context.Context, arg UpdateBalanceParams) (int64, error)
+	UpdateCategoryByIdFunc             func(ctx context.Context, arg UpdateCategoryByIdParams) (sql.Result, error)
+	UpdateRecurringTransactionFunc     func(ctx context.Context, arg UpdateRecurringTransactionParams) (sql.Result, error)
+	UpdateTransactionByIdFunc          func(ctx context.Context, arg UpdateTransactionByIdParams) (sql.Result, error)
+	UpdateUserByIdFunc                 func(ctx context.Context, arg UpdateUserByIdParams) (sql.Result, error)
 
 	WithTxFunc func(tx *sql.Tx) QuerierTx
 }
@@ -247,6 +257,77 @@ func (m *MockQuerierTx) UpdateUserById(ctx context.Context, arg UpdateUserByIdPa
 		return m.UpdateUserByIdFunc(ctx, arg)
 	}
 	return NewMockResult(1), nil
+}
+
+// Recurring Transactions
+func (m *MockQuerierTx) CreateOccurrence(ctx context.Context, arg CreateOccurrenceParams) (RecurringTransactionOccurrence, error) {
+	if m.CreateOccurrenceFunc != nil {
+		return m.CreateOccurrenceFunc(ctx, arg)
+	}
+	return RecurringTransactionOccurrence{}, nil
+}
+
+func (m *MockQuerierTx) CreateRecurringTransaction(ctx context.Context, arg CreateRecurringTransactionParams) (RecurringTransaction, error) {
+	if m.CreateRecurringTransactionFunc != nil {
+		return m.CreateRecurringTransactionFunc(ctx, arg)
+	}
+	return RecurringTransaction{}, nil
+}
+
+func (m *MockQuerierTx) DeleteRecurringTransaction(ctx context.Context, arg DeleteRecurringTransactionParams) (sql.Result, error) {
+	if m.DeleteRecurringTransactionFunc != nil {
+		return m.DeleteRecurringTransactionFunc(ctx, arg)
+	}
+	return nil, nil
+}
+
+func (m *MockQuerierTx) GetActiveRecurringTransactions(ctx context.Context, arg GetActiveRecurringTransactionsParams) ([]RecurringTransaction, error) {
+	if m.GetActiveRecurringTransactionsFunc != nil {
+		return m.GetActiveRecurringTransactionsFunc(ctx, arg)
+	}
+	return []RecurringTransaction{}, nil
+}
+
+func (m *MockQuerierTx) GetLastOccurrence(ctx context.Context, recurringTransactionID int32) (RecurringTransactionOccurrence, error) {
+	if m.GetLastOccurrenceFunc != nil {
+		return m.GetLastOccurrenceFunc(ctx, recurringTransactionID)
+	}
+	return RecurringTransactionOccurrence{}, nil
+}
+
+func (m *MockQuerierTx) GetOccurrenceForDate(ctx context.Context, arg GetOccurrenceForDateParams) (RecurringTransactionOccurrence, error) {
+	if m.GetOccurrenceForDateFunc != nil {
+		return m.GetOccurrenceForDateFunc(ctx, arg)
+	}
+	return RecurringTransactionOccurrence{}, nil
+}
+
+func (m *MockQuerierTx) GetOccurrences(ctx context.Context, recurringTransactionID int32) ([]RecurringTransactionOccurrence, error) {
+	if m.GetOccurrencesFunc != nil {
+		return m.GetOccurrencesFunc(ctx, recurringTransactionID)
+	}
+	return []RecurringTransactionOccurrence{}, nil
+}
+
+func (m *MockQuerierTx) GetRecurringTransactionByID(ctx context.Context, arg GetRecurringTransactionByIDParams) (RecurringTransaction, error) {
+	if m.GetRecurringTransactionByIDFunc != nil {
+		return m.GetRecurringTransactionByIDFunc(ctx, arg)
+	}
+	return RecurringTransaction{}, nil
+}
+
+func (m *MockQuerierTx) GetUserRecurringTransactions(ctx context.Context, userID int32) ([]RecurringTransaction, error) {
+	if m.GetUserRecurringTransactionsFunc != nil {
+		return m.GetUserRecurringTransactionsFunc(ctx, userID)
+	}
+	return []RecurringTransaction{}, nil
+}
+
+func (m *MockQuerierTx) UpdateRecurringTransaction(ctx context.Context, arg UpdateRecurringTransactionParams) (sql.Result, error) {
+	if m.UpdateRecurringTransactionFunc != nil {
+		return m.UpdateRecurringTransactionFunc(ctx, arg)
+	}
+	return nil, nil
 }
 
 // Tx

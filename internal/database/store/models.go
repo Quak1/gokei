@@ -5,6 +5,7 @@
 package store
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"time"
@@ -53,6 +54,50 @@ func (ns NullAccountType) Value() (driver.Value, error) {
 	return string(ns.AccountType), nil
 }
 
+type RecurrenceFrequency string
+
+const (
+	RecurrenceFrequencyDaily   RecurrenceFrequency = "daily"
+	RecurrenceFrequencyWeekly  RecurrenceFrequency = "weekly"
+	RecurrenceFrequencyMonthly RecurrenceFrequency = "monthly"
+	RecurrenceFrequencyYearly  RecurrenceFrequency = "yearly"
+)
+
+func (e *RecurrenceFrequency) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RecurrenceFrequency(s)
+	case string:
+		*e = RecurrenceFrequency(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RecurrenceFrequency: %T", src)
+	}
+	return nil
+}
+
+type NullRecurrenceFrequency struct {
+	RecurrenceFrequency RecurrenceFrequency `json:"recurrence_frequency"`
+	Valid               bool                `json:"valid"` // Valid is true if RecurrenceFrequency is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRecurrenceFrequency) Scan(value interface{}) error {
+	if value == nil {
+		ns.RecurrenceFrequency, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RecurrenceFrequency.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRecurrenceFrequency) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RecurrenceFrequency), nil
+}
+
 type Account struct {
 	ID           int32       `json:"id"`
 	CreatedAt    time.Time   `json:"-"`
@@ -73,6 +118,34 @@ type Category struct {
 	Icon      string    `json:"icon"`
 	Version   int32     `json:"-"`
 	UserID    int32     `json:"user_id"`
+}
+
+type RecurringTransaction struct {
+	ID             int32               `json:"id"`
+	CreatedAt      time.Time           `json:"-"`
+	UpdatedAt      time.Time           `json:"-"`
+	Version        int32               `json:"-"`
+	AccountID      int32               `json:"account_id"`
+	AmountCents    int32               `json:"amount_cents"`
+	CategoryID     int32               `json:"category_id"`
+	Title          string              `json:"title"`
+	Note           string              `json:"note"`
+	Frequency      RecurrenceFrequency `json:"frequency"`
+	Interval       int32               `json:"interval"`
+	StartDate      time.Time           `json:"start_date"`
+	EndDate        sql.NullTime        `json:"end_date"`
+	DayMonth       sql.NullInt32       `json:"day_month"`
+	DayWeek        sql.NullInt32       `json:"day_week"`
+	MaxOccurrences sql.NullInt32       `json:"max_occurrences"`
+	IsActive       bool                `json:"is_active"`
+}
+
+type RecurringTransactionOccurrence struct {
+	ID                     int32     `json:"id"`
+	CreatedAt              time.Time `json:"-"`
+	RecurringTransactionID int32     `json:"recurring_transaction_id"`
+	TransactionID          int32     `json:"transaction_id"`
+	OccurrenceDate         time.Time `json:"occurrence_date"`
 }
 
 type Token struct {
