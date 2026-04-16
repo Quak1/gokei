@@ -95,3 +95,24 @@ func (s *RecurringTransactionService) Create(userID int32, params *store.CreateR
 
 	return &newTransaction, nil
 }
+
+func (s *RecurringTransactionService) GetByID(userID, transactionID int32) (*store.RecurringTransaction, error) {
+	if transactionID < 1 || userID < 1 {
+		return nil, database.ErrRecordNotFound
+	}
+
+	transaction, err := s.queries.GetRecurringTransactionByID(context.Background(), store.GetRecurringTransactionByIDParams{
+		ID:     transactionID,
+		UserID: userID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, database.ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &transaction, nil
+}
